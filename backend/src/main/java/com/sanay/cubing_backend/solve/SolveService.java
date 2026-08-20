@@ -23,7 +23,7 @@ public class SolveService {
     this.sessionRepository = sessionRepository;
   }
   @Transactional
-  public Solve addSolve(UUID sessionId, UUID id, long timeMs, String scramble, Instant timestamp) {
+  public Solve addSolve(UUID sessionId, UUID id, long timeMs, String scramble, Instant timestamp, Penalty penalty) {
     Session session = sessionRepository.findById(sessionId)
       .orElseThrow(() -> new NotFoundException("Session not found: " + sessionId));
     
@@ -32,6 +32,7 @@ public class SolveService {
     solve.setTimeMs(timeMs);
     solve.setScramble(scramble);
     solve.setTimestamp(timestamp);
+    solve.setPenalty(penalty != null ? penalty : Penalty.NONE);
     solve.setSession(session);
 
     return solveRepository.save(solve);

@@ -2,7 +2,9 @@ package com.sanay.cubing_backend.solve;
 
 import com.sanay.cubing_backend.session.Session; 
 import jakarta.persistence.Column;
-import jakarta.persistence.Entity; 
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated; 
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -33,6 +35,10 @@ public class Solve {
 
   @Column(nullable = false)
   private Instant timestamp; 
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 16)
+  private Penalty penalty = Penalty.NONE;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "session_id", nullable = false)

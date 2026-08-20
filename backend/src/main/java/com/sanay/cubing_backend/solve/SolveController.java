@@ -33,7 +33,8 @@ public class SolveController {
         request.id(),
         request.timeMs(),
         request.scramble(),
-        request.timestamp()
+        request.timestamp(),
+        request.penalty()
       );
       return ResponseEntity.status(HttpStatus.CREATED).body(SolveResponse.from(solve, sessionId));
     }

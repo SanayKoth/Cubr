@@ -17,14 +17,15 @@ public class SessionService {
   }
 
   @Transactional
-  public Session createSession(String name){
+  public Session createSession(UUID id, String name, String event){
     Session session = new Session();
-    session.setId(UUID.randomUUID());
+    session.setId(id);
     session.setName(name);
+    session.setEvent(event);
     return sessionRepository.save(session);
   }
 
   public List<Session> listSessions(){
-    return sessionRepository.findAll();
+    return sessionRepository.findAllByOrderByCreatedAtAsc();
   }
 }

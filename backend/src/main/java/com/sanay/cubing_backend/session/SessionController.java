@@ -25,7 +25,7 @@ public class SessionController {
 
   @PostMapping
   public ResponseEntity<SessionResponse> createSession(@Valid @RequestBody CreateSessionRequest request) {
-    Session session = sessionService.createSession(request.name());
+    Session session = sessionService.createSession(request.id(), request.name(), request.event());
     return ResponseEntity.status(HttpStatus.CREATED).body(SessionResponse.from(session));
   }
 

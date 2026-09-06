@@ -88,7 +88,23 @@ export default function TimerPage() {
 
   return (
     <main className="min-h-full bg-bg p-8 font-sans text-text select-none">
-      <h1 className="font-brand text-3xl text-text">Cubr</h1>
+      <header className="flex items-center gap-8">
+        <h1 className="shrink-0 font-brand text-3xl text-text">Cubr</h1>
+
+        <button
+          type="button"
+          title="next scramble"
+          aria-label="next scramble"
+          disabled={!regenerateAllowed}
+          onClick={() => {
+            if (regenerateAllowed) consume()
+          }}
+          data-scramble={scramble ? 'ready' : 'pending'}
+          className="min-w-0 flex-1 text-left text-xl text-text-dim select-text disabled:cursor-default"
+        >
+          {scramble ? scramble.moves : 'generating…'}
+        </button>
+      </header>
 
       {/* Provisional placement — relocates into the real top bar in Step 5. */}
       <button
@@ -100,27 +116,11 @@ export default function TimerPage() {
         inspection: {inspectionEnabled ? 'on' : 'off'}
       </button>
 
-      <div className="mt-16 flex justify-center">
-        <button
-          type="button"
-          title="next scramble"
-          aria-label="next scramble"
-          disabled={!regenerateAllowed}
-          onClick={() => {
-            if (regenerateAllowed) consume()
-          }}
-          data-scramble={scramble ? 'ready' : 'pending'}
-          className="max-w-3xl text-center text-xl text-text-dim select-text disabled:cursor-default"
-        >
-          {scramble ? scramble.moves : 'generating…'}
-        </button>
-      </div>
-
       <div
         ref={readoutRef}
         role="timer"
         data-phase={phase}
-        className={`timer-figures mt-8 font-sans text-timer ${readoutTone(phase, inspectionCue)}`}
+        className={`timer-figures mt-16 font-sans text-timer ${readoutTone(phase, inspectionCue)}`}
       />
 
       {/*

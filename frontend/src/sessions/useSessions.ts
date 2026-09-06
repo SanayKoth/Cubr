@@ -1,22 +1,28 @@
 import { useCallback, useRef, useState } from 'react'
 import type { Penalty } from '../api/types'
 import type { Solve } from '../solves/types'
-import { eventLabel } from './events'
+import type { ScrambleType } from '../scramble/types'
+import { defaultSessionName } from './events'
 import type { Session } from './types'
 
-function createSession(name: string, event: string): Session {
+function createSession(
+  name: string,
+  event: string,
+  scrambleType: ScrambleType = 'WCA',
+): Session {
   const trimmed = name.trim()
   return {
     id: crypto.randomUUID(),
-    name: trimmed.length > 0 ? trimmed : eventLabel(event),
+    name: trimmed.length > 0 ? trimmed : defaultSessionName(event),
     event,
+    scrambleType,
     createdAt: new Date().toISOString(),
     solves: [],
   }
 }
 
 function createDefaultSession(): Session {
-  return createSession('3x3', '333')
+  return createSession(defaultSessionName('333'), '333', 'WCA')
 }
 
 export function useSessions() {
@@ -30,17 +36,28 @@ export function useSessions() {
     setActiveId(id)
   }, [])
 
-  const addSession = useCallback((name: string, event: string) => {
-    const session = createSession(name, event)
-    setSessions((current) => [...current, session])
-    setActiveId(session.id)
-    return session
-  }, [])
+  const addSession = useCallback(
+    (name: string, event: string, scrambleType: ScrambleType = 'WCA') => {
+      const session = createSession(name, event, scrambleType)
+      setSessions((current) => [...current, session])
+      setActiveId(session.id)
+      return session
+    },
+    [],
+  )
 
   const setEvent = useCallback((event: string) => {
     setSessions((current) =>
       current.map((session) =>
         session.id === activeId ? { ...session, event } : session,
+      ),
+    )
+  }, [activeId])
+
+  const setScrambleType = useCallback((scrambleType: ScrambleType) => {
+    setSessions((current) =>
+      current.map((session) =>
+        session.id === activeId ? { ...session, scrambleType } : session,
       ),
     )
   }, [activeId])
@@ -100,6 +117,7 @@ export function useSessions() {
     switchTo,
     addSession,
     setEvent,
+    setScrambleType,
     appendSolve,
     setPenalty,
     deleteSolve,

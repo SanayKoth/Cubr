@@ -20,3 +20,8 @@ export type WcaEventId = (typeof WCA_EVENTS)[number]['id']
 export function eventLabel(event: string): string {
   return WCA_EVENTS.find((entry) => entry.id === event)?.label ?? event
 }
+
+export function defaultSessionName(event: string, at = new Date()): string {
+  const month = at.toLocaleString('en-US', { month: 'short' })
+  return `${eventLabel(event)} ${month} ${at.getDate()}`
+}

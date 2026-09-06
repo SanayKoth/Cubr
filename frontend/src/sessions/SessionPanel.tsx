@@ -1,6 +1,9 @@
 import { useState } from 'react'
-import { eventLabel, WCA_EVENTS } from './events'
+import type { ScrambleType } from '../scramble/types'
+import { defaultSessionName, eventLabel, WCA_EVENTS } from './events'
 import type { Session, SessionPanel as Panel } from './types'
+
+const SCRAMBLE_TYPES: ScrambleType[] = ['WCA']
 
 type SessionPanelProps = {
   sessions: Session[]
@@ -8,8 +11,7 @@ type SessionPanelProps = {
   panel: Panel
   onPanel: (panel: Panel) => void
   onSwitch: (id: string) => void
-  onCreate: (name: string, event: string) => void
-  onChangeEvent: (event: string) => void
+  onCreate: (name: string, event: string, scrambleType: ScrambleType) => void
 }
 
 export default function SessionPanel({
@@ -19,45 +21,54 @@ export default function SessionPanel({
   onPanel,
   onSwitch,
   onCreate,
-  onChangeEvent,
 }: SessionPanelProps) {
-  const [draftName, setDraftName] = useState('')
-  const [draftEvent, setDraftEvent] = useState<string | null>(null)
+  const [draftName, setDraftName] = useState(defaultSessionName('333'))
+  const [draftEvent, setDraftEvent] = useState('333')
+  const [draftType, setDraftType] = useState<ScrambleType>('WCA')
+  const [nameTouched, setNameTouched] = useState(false)
+
+  const openCreate = () => {
+    setDraftEvent('333')
+    setDraftType('WCA')
+    setDraftName(defaultSessionName('333'))
+    setNameTouched(false)
+    onPanel('create')
+  }
+
+  const pickEvent = (event: string) => {
+    setDraftEvent(event)
+    if (!nameTouched) setDraftName(defaultSessionName(event))
+  }
 
   const confirmCreate = () => {
-    if (draftEvent === null) return
-    onCreate(draftName, draftEvent)
-    setDraftName('')
-    setDraftEvent(null)
+    onCreate(draftName, draftEvent, draftType)
     onPanel('none')
   }
 
   return (
-    <div data-session-ui className="mb-4 text-sm">
-      <div className="flex flex-col items-start gap-1">
-        <button
-          type="button"
-          tabIndex={-1}
-          data-session-name
-          onClick={() => onPanel(panel === 'switcher' || panel === 'create' ? 'none' : 'switcher')}
-          className="text-left text-text"
-        >
-          {active.name}
-        </button>
-        <button
-          type="button"
-          tabIndex={-1}
-          data-session-event
-          onClick={() => onPanel(panel === 'event' ? 'none' : 'event')}
-          className="text-left text-text-muted"
-        >
-          <span className="text-accent">{eventLabel(active.event)}</span>
-          <span> WCA</span>
-        </button>
-      </div>
+    <div data-session-ui>
+      <p className="text-xs uppercase tracking-wide text-text-muted">session</p>
+      <button
+        type="button"
+        tabIndex={-1}
+        data-session-name
+        onClick={() => onPanel(panel === 'switcher' ? 'none' : 'switcher')}
+        className="mt-1 block text-left text-base text-text"
+      >
+        {active.name}
+      </button>
+      <button
+        type="button"
+        tabIndex={-1}
+        data-new-session
+        onClick={openCreate}
+        className="mt-2 border border-border px-2 py-1 text-sm text-text-muted"
+      >
+        new session
+      </button>
 
       {panel === 'switcher' && (
-        <div className="mt-3 flex flex-col items-start gap-1 text-text-dim">
+        <div className="mt-3 flex flex-col items-start gap-1 text-sm text-text-dim">
           {sessions.map((session) => (
             <button
               type="button"
@@ -74,76 +85,88 @@ export default function SessionPanel({
               <span className="text-text-muted"> {eventLabel(session.event)}</span>
             </button>
           ))}
-          <button
-            type="button"
-            tabIndex={-1}
-            data-new-session
-            onClick={() => {
-              setDraftName('')
-              setDraftEvent(null)
-              onPanel('create')
-            }}
-            className="mt-2 text-left text-text-muted"
-          >
-            new session
-          </button>
         </div>
       )}
 
       {panel === 'create' && (
-        <div className="mt-3 flex flex-col items-start gap-2">
-          <input
-            data-session-name-input
-            tabIndex={-1}
-            value={draftName}
-            placeholder={draftEvent ? eventLabel(draftEvent) : 'name'}
-            onChange={(event) => setDraftName(event.target.value)}
-            className="w-full bg-transparent text-text outline-none placeholder:text-text-muted"
-          />
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {WCA_EVENTS.map((entry) => (
+        <div
+          className="fixed inset-0 z-30 flex items-center justify-center bg-bg/80"
+          onClick={() => onPanel('none')}
+        >
+          <div
+            data-session-create
+            className="w-full max-w-md bg-elevated p-6 text-left"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-xs uppercase tracking-wide text-text-muted">new session</p>
+
+            <label className="mt-4 block text-xs text-text-muted" htmlFor="session-name">
+              name
+            </label>
+            <input
+              id="session-name"
+              data-session-name-input
+              tabIndex={-1}
+              value={draftName}
+              onChange={(event) => {
+                setNameTouched(true)
+                setDraftName(event.target.value)
+              }}
+              className="mt-1 w-full border-b border-border bg-transparent pb-1 text-text outline-none"
+            />
+
+            <p className="mt-5 text-xs text-text-muted">event</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+              {WCA_EVENTS.map((entry) => (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  key={entry.id}
+                  data-create-event={entry.id}
+                  onClick={() => pickEvent(entry.id)}
+                  className={draftEvent === entry.id ? 'text-accent' : 'text-text-muted'}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-5 text-xs text-text-muted">scramble type</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+              {SCRAMBLE_TYPES.map((type) => (
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  key={type}
+                  data-create-type={type}
+                  onClick={() => setDraftType(type)}
+                  className={draftType === type ? 'text-accent' : 'text-text-muted'}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 flex gap-4 text-sm">
               <button
                 type="button"
                 tabIndex={-1}
-                key={entry.id}
-                data-create-event={entry.id}
-                onClick={() => setDraftEvent(entry.id)}
-                className={draftEvent === entry.id ? 'text-accent' : 'text-text-muted'}
+                data-create-confirm
+                onClick={confirmCreate}
+                className="text-text"
               >
-                {entry.label}
+                create
               </button>
-            ))}
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => onPanel('none')}
+                className="text-text-muted"
+              >
+                cancel
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            tabIndex={-1}
-            data-create-confirm
-            disabled={draftEvent === null}
-            onClick={confirmCreate}
-            className={draftEvent === null ? 'text-text-muted' : 'text-text'}
-          >
-            create
-          </button>
-        </div>
-      )}
-
-      {panel === 'event' && (
-        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
-          {WCA_EVENTS.map((entry) => (
-            <button
-              type="button"
-              tabIndex={-1}
-              key={entry.id}
-              data-event-option={entry.id}
-              onClick={() => {
-                onChangeEvent(entry.id)
-                onPanel('none')
-              }}
-              className={active.event === entry.id ? 'text-accent' : 'text-text-muted'}
-            >
-              {entry.label}
-            </button>
-          ))}
         </div>
       )}
     </div>

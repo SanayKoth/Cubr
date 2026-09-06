@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useScramble } from '../scramble/useScramble'
+import EventTypeBar from '../sessions/EventTypeBar'
 import SessionPanel from '../sessions/SessionPanel'
 import type { SessionPanel as Panel } from '../sessions/types'
 import { useSessions } from '../sessions/useSessions'
@@ -45,17 +46,23 @@ export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [panel, setPanel] = useState<Panel>('none')
+  const solveScrollRef = useRef<HTMLElement>(null)
   const {
     sessions,
     active,
     switchTo,
     addSession,
     setEvent,
+    setScrambleType,
     appendSolve,
     setPenalty,
     deleteSolve,
   } = useSessions()
   const { current: scramble, consume } = useScramble(active.event)
+
+  useEffect(() => {
+    solveScrollRef.current?.scrollTo({ top: 0 })
+  }, [active.solves.length])
 
   const recordSolve = useCallback(
     (result: TimerResult) => {
@@ -103,6 +110,8 @@ export default function TimerPage() {
       if (!(event.target instanceof Element)) return
       if (event.target.closest('[data-solve-list]')) return
       if (event.target.closest('[data-session-ui]')) return
+      if (event.target.closest('[data-session-create]')) return
+      if (event.target.closest('[data-scramble-meta]')) return
       setSelectedId(null)
       setPanel('none')
     }
@@ -130,6 +139,23 @@ export default function TimerPage() {
         Cubr
       </h1>
 
+      <div className="px-6 pt-6 md:absolute md:top-28 md:left-6 md:z-20 md:w-56 md:p-0">
+        <SessionPanel
+          sessions={sessions}
+          active={active}
+          panel={panel}
+          onPanel={setPanel}
+          onSwitch={(id) => {
+            switchTo(id)
+            setSelectedId(null)
+          }}
+          onCreate={(name, event, scrambleType) => {
+            addSession(name, event, scrambleType)
+            setSelectedId(null)
+          }}
+        />
+      </div>
+
       <header className="px-6 pt-4 text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1">
         <button
           type="button"
@@ -144,6 +170,13 @@ export default function TimerPage() {
         >
           {scramble ? scramble.moves : 'generating…'}
         </button>
+        <EventTypeBar
+          active={active}
+          panel={panel}
+          onPanel={setPanel}
+          onChangeEvent={setEvent}
+          onChangeType={setScrambleType}
+        />
       </header>
 
       <section className="relative flex flex-1 items-center justify-center md:absolute md:inset-0">
@@ -167,22 +200,10 @@ export default function TimerPage() {
         </button>
       </section>
 
-      <aside className="flex max-h-[32vh] flex-col justify-end overflow-y-auto px-6 pb-6 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[50vh] md:w-56 md:px-0 md:pb-0">
-        <SessionPanel
-          sessions={sessions}
-          active={active}
-          panel={panel}
-          onPanel={setPanel}
-          onSwitch={(id) => {
-            switchTo(id)
-            setSelectedId(null)
-          }}
-          onCreate={(name, event) => {
-            addSession(name, event)
-            setSelectedId(null)
-          }}
-          onChangeEvent={setEvent}
-        />
+      <aside
+        ref={solveScrollRef}
+        className="max-h-[32vh] overflow-y-auto overscroll-contain px-6 pb-6 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[40vh] md:w-56 md:px-0 md:pb-0"
+      >
         <SolveList
           solves={active.solves}
           selectedId={selectedId}

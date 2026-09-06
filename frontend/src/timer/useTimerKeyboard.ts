@@ -44,6 +44,7 @@ export function useTimerKeyboard({
       if (event.repeat) return
 
       if (event.code === 'Space') {
+        if (event.target instanceof HTMLInputElement) return
         event.preventDefault()
         held.add(event.code)
         pressRef.current()

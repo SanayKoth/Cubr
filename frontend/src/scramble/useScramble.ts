@@ -17,7 +17,8 @@ export function useScramble(
   event: string,
   provider: ScrambleProvider = wcaProvider,
 ) {
-  const [current, setCurrent] = useState<Scramble | null>(null)
+  const [loaded, setLoaded] = useState<Scramble | null>(null)
+  const current = loaded !== null && loaded.event === event ? loaded : null
 
   const currentRef = useRef<Scramble | null>(null)
   const nextRef = useRef<NextSlot | null>(null)
@@ -29,6 +30,10 @@ export function useScramble(
     eventRef.current = event
     providerRef.current = provider
   }, [event, provider])
+
+  useEffect(() => {
+    currentRef.current = current
+  }, [current])
 
   const prefetch = useCallback(() => {
     const promise = providerRef.current.getNext(eventRef.current)
@@ -54,13 +59,13 @@ export function useScramble(
 
     if (next?.kind === 'ready') {
       currentRef.current = next.scramble
-      setCurrent(next.scramble)
+      setLoaded(next.scramble)
       prefetch()
       return shown
     }
 
     currentRef.current = null
-    setCurrent(null)
+    setLoaded(null)
 
     const promise =
       next?.kind === 'pending'
@@ -71,13 +76,13 @@ export function useScramble(
       .then((scramble) => {
         if (!aliveRef.current) return
         currentRef.current = scramble
-        setCurrent(scramble)
+        setLoaded(scramble)
         prefetch()
       })
       .catch(() => {
         if (!aliveRef.current) return
         currentRef.current = null
-        setCurrent(null)
+        setLoaded(null)
       })
 
     return shown
@@ -92,7 +97,7 @@ export function useScramble(
     void provider.getNext(event).then((scramble) => {
       if (cancelled || !aliveRef.current) return
       currentRef.current = scramble
-      setCurrent(scramble)
+      setLoaded(scramble)
       prefetch()
     })
 

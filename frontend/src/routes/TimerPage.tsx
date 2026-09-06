@@ -1,19 +1,14 @@
-import { useCallback, useState } from 'react'
-import type { Penalty } from '../api/types'
-import { CURRENT_EVENT } from '../scramble/types'
-import type { Scramble } from '../scramble/types'
+import { useCallback, useEffect, useState } from 'react'
 import { useScramble } from '../scramble/useScramble'
-import { formatTime } from '../timer/format'
+import SessionPanel from '../sessions/SessionPanel'
+import type { SessionPanel as Panel } from '../sessions/types'
+import { useSessions } from '../sessions/useSessions'
+import SolveList from '../solves/SolveList'
 import type { InspectionCue, TimerPhase, TimerResult } from '../timer/types'
 import { useTimer } from '../timer/useTimer'
 import { useTimerKeyboard } from '../timer/useTimerKeyboard'
 
 const INSPECTION_STORAGE_KEY = 'cubr.inspection'
-
-type RecordedSolve = {
-  result: TimerResult
-  scramble: Scramble | null
-}
 
 function readInspectionEnabled(): boolean {
   try {
@@ -42,27 +37,37 @@ function readoutTone(phase: TimerPhase, cue: InspectionCue): string {
   return 'text-text'
 }
 
-function penaltyLabel(penalty: Penalty): string {
-  if (penalty === 'PLUS_TWO') return '+2'
-  if (penalty === 'DNF') return 'DNF'
-  return ''
-}
-
 function canRegenerate(phase: TimerPhase): boolean {
   return phase === 'idle' || phase === 'stopped'
 }
 
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
-  const [solves, setSolves] = useState<RecordedSolve[]>([])
-  const { current: scramble, consume } = useScramble(CURRENT_EVENT)
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [panel, setPanel] = useState<Panel>('none')
+  const {
+    sessions,
+    active,
+    switchTo,
+    addSession,
+    setEvent,
+    appendSolve,
+    setPenalty,
+    deleteSolve,
+  } = useSessions()
+  const { current: scramble, consume } = useScramble(active.event)
 
   const recordSolve = useCallback(
     (result: TimerResult) => {
       const shown = consume()
-      setSolves((current) => [...current, { result, scramble: shown }])
+      appendSolve({
+        timeMs: result.timeMs,
+        penalty: result.penalty,
+        scrambleMoves: shown?.moves ?? null,
+      })
+      setSelectedId(null)
     },
-    [consume],
+    [appendSolve, consume],
   )
 
   const { phase, inspectionCue, readoutRef, press, release, cancel } = useTimer({
@@ -70,7 +75,40 @@ export default function TimerPage() {
     onSolve: recordSolve,
   })
 
-  useTimerKeyboard({ phase, press, release, cancel })
+  const pressAndDismiss = useCallback(() => {
+    setSelectedId(null)
+    setPanel('none')
+    press()
+  }, [press])
+
+  const cancelAndDismiss = useCallback(() => {
+    setSelectedId(null)
+    if ((phase === 'idle' || phase === 'stopped') && panel !== 'none') {
+      setPanel('none')
+      return
+    }
+    setPanel('none')
+    cancel()
+  }, [cancel, panel, phase])
+
+  useTimerKeyboard({
+    phase,
+    press: pressAndDismiss,
+    release,
+    cancel: cancelAndDismiss,
+  })
+
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      if (!(event.target instanceof Element)) return
+      if (event.target.closest('[data-solve-list]')) return
+      if (event.target.closest('[data-session-ui]')) return
+      setSelectedId(null)
+      setPanel('none')
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [])
 
   const toggleInspection = () => {
     const next = !inspectionEnabled
@@ -80,17 +118,19 @@ export default function TimerPage() {
       !next &&
       (phase === 'inspecting' || phase === 'holding' || phase === 'ready')
     ) {
-      cancel()
+      cancelAndDismiss()
     }
   }
 
   const regenerateAllowed = canRegenerate(phase)
 
   return (
-    <main className="min-h-full bg-bg p-8 font-sans text-text select-none">
-      <header className="flex items-center gap-8">
-        <h1 className="shrink-0 font-brand text-3xl text-text">Cubr</h1>
+    <main className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block">
+      <h1 className="px-6 pt-6 font-brand text-3xl text-text md:absolute md:top-6 md:left-6 md:z-20 md:p-0">
+        Cubr
+      </h1>
 
+      <header className="px-6 pt-4 text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1">
         <button
           type="button"
           title="next scramble"
@@ -100,48 +140,64 @@ export default function TimerPage() {
             if (regenerateAllowed) consume()
           }}
           data-scramble={scramble ? 'ready' : 'pending'}
-          className="min-w-0 flex-1 text-left text-xl text-text-dim select-text disabled:cursor-default"
+          className="max-w-5xl text-center text-xl leading-snug text-text-dim select-text disabled:cursor-default md:text-2xl"
         >
           {scramble ? scramble.moves : 'generating…'}
         </button>
       </header>
 
-      {/* Provisional placement — relocates into the real top bar in Step 5. */}
-      <button
-        type="button"
-        tabIndex={-1}
-        onClick={toggleInspection}
-        className={`mt-4 text-sm ${inspectionEnabled ? 'text-accent' : 'text-text-muted'}`}
-      >
-        inspection: {inspectionEnabled ? 'on' : 'off'}
-      </button>
+      <section className="relative flex flex-1 items-center justify-center md:absolute md:inset-0">
+        <div
+          ref={readoutRef}
+          role="timer"
+          data-phase={phase}
+          className={`timer-figures font-sans text-timer ${readoutTone(phase, inspectionCue)}`}
+        />
 
-      <div
-        ref={readoutRef}
-        role="timer"
-        data-phase={phase}
-        className={`timer-figures mt-16 font-sans text-timer ${readoutTone(phase, inspectionCue)}`}
-      />
+        <button
+          type="button"
+          tabIndex={-1}
+          data-inspection
+          onClick={toggleInspection}
+          className={`absolute right-6 bottom-6 text-sm ${
+            inspectionEnabled ? 'text-accent' : 'text-text-muted'
+          }`}
+        >
+          inspection: {inspectionEnabled ? 'on' : 'off'}
+        </button>
+      </section>
 
-      {/*
-        THROW AWAY in Step 4. In-memory only — no persistence, no API.
-        Shows the scramble that belonged to each solve, not the promoted next.
-      */}
-      {solves.length > 0 && (
-        <ol className="mt-16 list-decimal pl-6 text-sm text-text-dim">
-          {solves.map((solve, index) => {
-            const tag = penaltyLabel(solve.result.penalty)
-            return (
-              <li key={`${solve.result.timeMs}-${index}`}>
-                {formatTime(solve.result.timeMs)}
-                {tag ? ` ${tag}` : ''}
-                {solve.result.penalty !== 'NONE' ? ` (${solve.result.penalty})` : ''}
-                {solve.scramble ? ` — ${solve.scramble.moves}` : ''}
-              </li>
-            )
-          })}
-        </ol>
-      )}
+      <aside className="flex max-h-[32vh] flex-col justify-end overflow-y-auto px-6 pb-6 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[50vh] md:w-56 md:px-0 md:pb-0">
+        <SessionPanel
+          sessions={sessions}
+          active={active}
+          panel={panel}
+          onPanel={setPanel}
+          onSwitch={(id) => {
+            switchTo(id)
+            setSelectedId(null)
+          }}
+          onCreate={(name, event) => {
+            addSession(name, event)
+            setSelectedId(null)
+          }}
+          onChangeEvent={setEvent}
+        />
+        <SolveList
+          solves={active.solves}
+          selectedId={selectedId}
+          onSelect={(listId) =>
+            setSelectedId((current) => (current === listId ? null : listId))
+          }
+          onSetPenalty={setPenalty}
+          onDelete={(listId) => {
+            deleteSolve(listId)
+            setSelectedId(null)
+          }}
+        />
+        {/* Stats reserved for Step 6. Empty on purpose — no fake numbers. */}
+        <div data-stats-slot className="min-h-20" />
+      </aside>
     </main>
   )
 }

@@ -33,7 +33,7 @@
   --text-xl:    1.5rem;
   --text-2xl:   2rem;
   --text-3xl:   3rem;
-  --text-timer: 5rem;   /* reserved for the timer readout (Step 2) */
+  --text-timer: 7rem;
 
   /* Spacing base — Tailwind derives the numeric spacing scale from this */
   --spacing: 0.25rem;

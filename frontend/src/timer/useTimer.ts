@@ -14,8 +14,8 @@ import { HOLD_THRESHOLD_MS } from './types'
 import type { InspectionCue, TimerPhase, UseTimerOptions } from './types'
 
 /*
-  Headless timer. Knows nothing about scrambles, sessions, layout, or the API
-  client. Pages pass configuration in and receive results through onSolve.
+  Headless timer. Knows nothing about sessions, layout, or the API client.
+  Pages pass configuration in and receive results through onSolve.
 
   The running / inspecting digits are written straight to the readout DOM node
   inside a requestAnimationFrame loop. React state updates only on phase

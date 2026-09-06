@@ -1,11 +1,19 @@
 import { useCallback, useState } from 'react'
 import type { Penalty } from '../api/types'
+import { CURRENT_EVENT } from '../scramble/types'
+import type { Scramble } from '../scramble/types'
+import { useScramble } from '../scramble/useScramble'
 import { formatTime } from '../timer/format'
 import type { InspectionCue, TimerPhase, TimerResult } from '../timer/types'
 import { useTimer } from '../timer/useTimer'
 import { useTimerKeyboard } from '../timer/useTimerKeyboard'
 
 const INSPECTION_STORAGE_KEY = 'cubr.inspection'
+
+type RecordedSolve = {
+  result: TimerResult
+  scramble: Scramble | null
+}
 
 function readInspectionEnabled(): boolean {
   try {
@@ -40,17 +48,26 @@ function penaltyLabel(penalty: Penalty): string {
   return ''
 }
 
+function canRegenerate(phase: TimerPhase): boolean {
+  return phase === 'idle' || phase === 'stopped'
+}
+
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
-  const [solves, setSolves] = useState<TimerResult[]>([])
+  const [solves, setSolves] = useState<RecordedSolve[]>([])
+  const { current: scramble, consume } = useScramble(CURRENT_EVENT)
 
-  const onSolve = useCallback((result: TimerResult) => {
-    setSolves((current) => [...current, result])
-  }, [])
+  const recordSolve = useCallback(
+    (result: TimerResult) => {
+      const shown = consume()
+      setSolves((current) => [...current, { result, scramble: shown }])
+    },
+    [consume],
+  )
 
   const { phase, inspectionCue, readoutRef, press, release, cancel } = useTimer({
     inspectionEnabled,
-    onSolve,
+    onSolve: recordSolve,
   })
 
   useTimerKeyboard({ phase, press, release, cancel })
@@ -67,6 +84,8 @@ export default function TimerPage() {
     }
   }
 
+  const regenerateAllowed = canRegenerate(phase)
+
   return (
     <main className="min-h-full bg-bg p-8 font-sans text-text select-none">
       <h1 className="font-brand text-3xl text-text">Cubr</h1>
@@ -81,26 +100,43 @@ export default function TimerPage() {
         inspection: {inspectionEnabled ? 'on' : 'off'}
       </button>
 
+      <div className="mt-16 flex justify-center">
+        <button
+          type="button"
+          title="next scramble"
+          aria-label="next scramble"
+          disabled={!regenerateAllowed}
+          onClick={() => {
+            if (regenerateAllowed) consume()
+          }}
+          data-scramble={scramble ? 'ready' : 'pending'}
+          className="max-w-3xl text-center text-xl text-text-dim select-text disabled:cursor-default"
+        >
+          {scramble ? scramble.moves : 'generating…'}
+        </button>
+      </div>
+
       <div
         ref={readoutRef}
         role="timer"
         data-phase={phase}
-        className={`timer-figures mt-16 font-sans text-timer ${readoutTone(phase, inspectionCue)}`}
+        className={`timer-figures mt-8 font-sans text-timer ${readoutTone(phase, inspectionCue)}`}
       />
 
       {/*
-        THROW AWAY in Step 4. In-memory only — no persistence, no API, no styling
-        effort. Exists so the onSolve callback is visibly working.
+        THROW AWAY in Step 4. In-memory only — no persistence, no API.
+        Shows the scramble that belonged to each solve, not the promoted next.
       */}
       {solves.length > 0 && (
         <ol className="mt-16 list-decimal pl-6 text-sm text-text-dim">
           {solves.map((solve, index) => {
-            const tag = penaltyLabel(solve.penalty)
+            const tag = penaltyLabel(solve.result.penalty)
             return (
-              <li key={`${solve.timeMs}-${index}`}>
-                {formatTime(solve.timeMs)}
+              <li key={`${solve.result.timeMs}-${index}`}>
+                {formatTime(solve.result.timeMs)}
                 {tag ? ` ${tag}` : ''}
-                {solve.penalty !== 'NONE' ? ` (${solve.penalty})` : ''}
+                {solve.result.penalty !== 'NONE' ? ` (${solve.result.penalty})` : ''}
+                {solve.scramble ? ` — ${solve.scramble.moves}` : ''}
               </li>
             )
           })}

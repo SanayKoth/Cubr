@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/*
+  DESIGN TOKENS — the single source of truth for color, type, spacing, fonts.
+  Tailwind v4 reads these from @theme and generates matching utilities:
+    --color-accent  -> bg-accent / text-accent / border-accent
+    --font-brand    -> font-brand
+    --text-2xl      -> text-2xl
+  Components must consume these tokens. Never hardcode a hex or px value.
+*/
+@theme {
+  /* Palette: near-black base, one moss accent used sparingly */
+  --color-bg:          #0d0d0f;
+  --color-surface:     #141417;
+  --color-elevated:    #1b1b1f;
+  --color-interactive: #232328;
+  --color-border:      #2a2a30;
+  --color-text:        #ededf0;
+  --color-text-dim:    #9a9aa5;
+  --color-text-muted:  #6a6a75;
+  --color-accent:      #8fa86b; /* moss green — active/selected/PB/links only */
+  --color-accent-dim:  #5f6f48;
+
+  /* Fonts: Inter for UI, Courier Prime for the wordmark/brand */
+  --font-sans:  "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Courier Prime", ui-monospace, monospace;
+
+  /* Type scale */
+  --text-xs:    0.75rem;
+  --text-sm:    0.875rem;
+  --text-base:  1rem;
+  --text-lg:    1.125rem;
+  --text-xl:    1.5rem;
+  --text-2xl:   2rem;
+  --text-3xl:   3rem;
+  --text-timer: 5rem;   /* reserved for the timer readout (Step 2) */
+
+  /* Spacing base — Tailwind derives the numeric spacing scale from this */
+  --spacing: 0.25rem;
+}
+
+/*
+  Reserve tabular figures for the timer readout NOW so it is not forgotten in
+  Step 2. Without tabular-nums, digit widths change as they count and the
+  running display jitters every frame. Apply `timer-figures` to the readout.
+*/
+@utility timer-figures {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}

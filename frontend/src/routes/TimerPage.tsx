@@ -9,6 +9,7 @@ import type { SessionPanel as Panel } from '../sessions/types'
 import { useSessions } from '../sessions/useSessions'
 import { useSyncProcessor } from '../sync/useSyncProcessor'
 import SolveList from '../solves/SolveList'
+import { formatSolveTime } from '../solves/format'
 import { bestSingle } from '../stats/engine'
 import StatsBlock from '../stats/StatsBlock'
 import ManualReadout from '../timer/ManualReadout'
@@ -17,6 +18,7 @@ import type { InspectionCue, TimerPhase, TimerResult } from '../timer/types'
 import { useGanTimer } from '../timer/useGanTimer'
 import { useTimer } from '../timer/useTimer'
 import { useTimerKeyboard } from '../timer/useTimerKeyboard'
+import { useTimerPointer } from '../timer/useTimerPointer'
 
 const ScramblePreview = lazy(() => import('../preview/ScramblePreview'))
 
@@ -67,6 +69,7 @@ export default function TimerPage() {
   const [inputMode, setInputModeState] = useState<TimerInputMode>(readTimerInputMode)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [panel, setPanel] = useState<Panel>('none')
+  const [sheetOpen, setSheetOpen] = useState(false)
   const solveScrollRef = useRef<HTMLDivElement>(null)
   const settingsOpen = Boolean(useMatch('/settings'))
   const {
@@ -142,11 +145,13 @@ export default function TimerPage() {
   const pressAndDismiss = useCallback(() => {
     setSelectedId(null)
     setPanel('none')
+    setSheetOpen(false)
     press()
   }, [press])
 
   const cancelAndDismiss = useCallback(() => {
     setSelectedId(null)
+    setSheetOpen(false)
     if ((phase === 'idle' || phase === 'stopped') && panel !== 'none') {
       setPanel('none')
       return
@@ -155,12 +160,20 @@ export default function TimerPage() {
     cancel()
   }, [cancel, panel, phase])
 
+  const pointerEnabled = !settingsOpen && inputMode === 'keyboard'
+
   useTimerKeyboard({
     phase,
     press: pressAndDismiss,
     release,
     cancel: cancelAndDismiss,
-    enabled: !settingsOpen && inputMode === 'keyboard',
+    enabled: pointerEnabled,
+  })
+
+  useTimerPointer({
+    press: pressAndDismiss,
+    release,
+    enabled: pointerEnabled,
   })
 
   useEffect(() => {
@@ -205,8 +218,12 @@ export default function TimerPage() {
       if (event.target.closest('[data-scramble-nav]')) return
       if (event.target.closest('[data-scramble-preview]')) return
       if (event.target.closest('[data-settings]')) return
+      if (event.target.closest('[data-times-sheet]')) return
+      if (event.target.closest('[data-session-affordance]')) return
+      if (event.target.closest('[data-times-affordance]')) return
       setSelectedId(null)
       setPanel('none')
+      setSheetOpen(false)
     }
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
@@ -248,6 +265,7 @@ export default function TimerPage() {
   const focus = phase === 'running' || ganRunning
   const best = bestSingle(active?.solves ?? [])
   const pbMs = best.kind === 'numeric' ? best.ms : null
+  const lastSolve = active?.solves.at(-1) ?? null
   const chrome = focus
     ? 'pointer-events-none opacity-0 transition-opacity duration-500 ease-out'
     : 'opacity-100 transition-opacity duration-500 ease-out'
@@ -261,16 +279,19 @@ export default function TimerPage() {
       data-timer-focus={focus ? 'true' : 'false'}
       className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block"
     >
-      <h1 className={`px-6 pt-6 font-brand text-3xl text-text md:absolute md:top-6 md:left-6 md:z-20 md:p-0 ${chrome}`}>
+      <h1
+        className={`absolute top-[max(1.5rem,env(safe-area-inset-top))] left-[max(1.5rem,env(safe-area-inset-left))] z-20 font-brand text-xl text-text md:top-6 md:left-6 md:text-3xl ${chrome}`}
+      >
         Cubr
       </h1>
 
       <Link
         to="/settings"
         aria-label="settings"
+        data-settings
         aria-hidden={focus}
         tabIndex={focus ? -1 : undefined}
-        className={`absolute top-5 right-5 z-20 flex size-12 items-center justify-center text-text outline-none ${chrome}`}
+        className={`absolute top-[max(1.25rem,env(safe-area-inset-top))] right-[max(1.25rem,env(safe-area-inset-right))] z-20 flex size-12 items-center justify-center text-text outline-none md:top-5 md:right-5 ${chrome}`}
       >
         <svg
           aria-hidden="true"
@@ -295,8 +316,21 @@ export default function TimerPage() {
         </svg>
       </Link>
 
+      {sheetOpen && (
+        <div
+          data-times-backdrop
+          aria-hidden
+          className="fixed inset-0 z-[25] bg-bg/80 md:hidden"
+        />
+      )}
+
       <div
-        className={`flex max-h-[42vh] flex-col px-6 pt-6 md:absolute md:top-28 md:bottom-8 md:left-6 md:z-20 md:max-h-none md:w-56 md:p-0 ${chrome}`}
+        data-times-sheet
+        className={`${
+          sheetOpen
+            ? 'fixed inset-x-0 bottom-0 z-30 flex max-h-[min(80vh,calc(100dvh-env(safe-area-inset-top)-2rem))] min-h-0 flex-col border-t border-border bg-bg px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] touch-auto'
+            : 'hidden'
+        } md:absolute md:inset-auto md:top-28 md:bottom-8 md:left-6 md:z-20 md:flex md:max-h-none md:w-56 md:flex-col md:border-0 md:bg-transparent md:p-0 md:touch-auto ${chrome}`}
       >
         {active && (
           <SessionPanel
@@ -339,7 +373,34 @@ export default function TimerPage() {
         </div>
       </div>
 
-      <header className={`px-6 pt-4 text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1 ${chrome}`}>
+      {active && (
+        <div
+          className={`absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-[max(1.25rem,env(safe-area-inset-left))] z-20 flex flex-col items-start gap-1 md:hidden ${chrome}`}
+        >
+          <button
+            type="button"
+            data-session-affordance
+            onClick={() => setSheetOpen(true)}
+            className="max-w-[10rem] truncate text-sm text-text-dim"
+          >
+            {active.name}
+          </button>
+          <button
+            type="button"
+            data-times-affordance
+            onClick={() => setSheetOpen(true)}
+            className="text-sm text-text-dim"
+          >
+            {lastSolve
+              ? formatSolveTime(lastSolve.timeMs, lastSolve.penalty)
+              : 'times'}
+          </button>
+        </div>
+      )}
+
+      <header
+        className={`px-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.25rem))] text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1 ${chrome}`}
+      >
         <button
           type="button"
           title="next scramble"
@@ -391,7 +452,11 @@ export default function TimerPage() {
         </div>
       </header>
 
-      <section className="relative flex flex-1 items-center justify-center md:absolute md:inset-0">
+      <section
+        className={`relative flex flex-1 items-center justify-center pb-32 md:absolute md:inset-0 md:pb-0 ${
+          inputMode === 'keyboard' ? 'touch-none' : ''
+        }`}
+      >
         {inputMode === 'manual' ? (
           <ManualReadout
             paused={settingsOpen}
@@ -420,9 +485,11 @@ export default function TimerPage() {
         )}
       </section>
 
-      <div className={`absolute right-5 bottom-5 z-10 flex flex-col items-end gap-2 ${chrome}`}>
+      <div
+        className={`absolute right-[max(1.25rem,env(safe-area-inset-right))] bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-10 flex flex-col items-end gap-2 md:right-5 md:bottom-5 ${chrome}`}
+      >
         {preview && (
-          <div className="h-32 w-32 md:h-44 md:w-44">
+          <div className="h-20 w-20 md:h-44 md:w-44">
             <Suspense fallback={null}>
               <ScramblePreview event={preview.event} moves={preview.moves} />
             </Suspense>

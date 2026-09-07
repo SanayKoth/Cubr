@@ -11,8 +11,11 @@ export default function StatsBlock({ solves }: StatsBlockProps) {
   const stats = computeSessionStats(solves)
 
   return (
-    <div data-stats-slot className="mt-3 shrink-0 border-t border-border pt-3 text-sm">
-      <div className="grid grid-cols-[3.25rem_1fr_1fr] items-baseline gap-x-3 gap-y-1">
+    <div
+      data-stats-slot
+      className="mt-3 w-fit shrink-0 border-t border-border pt-3 text-sm"
+    >
+      <div className="grid grid-cols-[3rem_4rem_4rem] items-baseline gap-x-3 gap-y-1">
         <span className="text-text-muted">mean</span>
         <span data-stat="mean" className="text-right font-sans text-text timer-figures">
           {formatStat(stats.mean)}
@@ -30,9 +33,13 @@ export default function StatsBlock({ solves }: StatsBlockProps) {
         </span>
         <span />
 
-        <span />
-        <span className="pt-1 text-right text-xs text-text-muted">current</span>
-        <span className="pt-1 text-right text-xs text-text-muted">best</span>
+        <span className="mt-2" />
+        <span className="mt-2 text-right text-xs uppercase tracking-wide text-text-muted">
+          current
+        </span>
+        <span className="mt-2 text-right text-xs uppercase tracking-wide text-text-muted">
+          best
+        </span>
 
         {AO_NS.map((n) => (
           <AoRow
@@ -45,8 +52,11 @@ export default function StatsBlock({ solves }: StatsBlockProps) {
           />
         ))}
 
-        <span className="pt-1 text-text-muted">n</span>
-        <span data-stat="count" className="pt-1 text-right font-sans text-text timer-figures">
+        <span className="mt-2 text-text-muted">n</span>
+        <span
+          data-stat="count"
+          className="mt-2 text-right font-sans text-text timer-figures"
+        >
           {stats.count}
         </span>
         <span />
@@ -74,7 +84,7 @@ function AoRow({
       <span data-stat={currentAttr} className="text-right font-sans text-text timer-figures">
         {current}
       </span>
-      <span data-stat={bestAttr} className="text-right timer-figures text-text-dim">
+      <span data-stat={bestAttr} className="text-right font-sans timer-figures text-text-dim">
         {best}
       </span>
     </>

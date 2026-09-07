@@ -122,14 +122,19 @@ export function useScramble(
     previousRef.current = null
     nextRef.current = null
 
-    void provider.getNext(event).then((scramble) => {
-      if (cancelled || !aliveRef.current) return
-      previousRef.current = null
-      setPrevious(null)
-      currentRef.current = scramble
-      setLoaded(scramble)
-      prefetch()
-    })
+    void provider
+      .getNext(event)
+      .then((scramble) => {
+        if (cancelled || !aliveRef.current) return
+        previousRef.current = null
+        setPrevious(null)
+        currentRef.current = scramble
+        setLoaded(scramble)
+        prefetch()
+      })
+      .catch((error) => {
+        console.error('scramble generation failed', error)
+      })
 
     return () => {
       cancelled = true

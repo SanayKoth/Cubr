@@ -5,7 +5,7 @@ type GanReadoutProps = {
   running: boolean
   inspecting: boolean
   inspectionCue: InspectionCue
-  personalBest: boolean
+  personalBest?: boolean
   clickable: boolean
   onButton: () => void
   readoutRef: (node: HTMLDivElement | null) => void
@@ -16,7 +16,6 @@ function ganTone(
   running: boolean,
   inspecting: boolean,
   cue: InspectionCue,
-  personalBest: boolean,
 ): string {
   if (!connected) return 'text-text-dim'
   if (running) return 'text-text'
@@ -25,7 +24,6 @@ function ganTone(
     if (cue >= 8) return 'text-text'
     return 'text-text-dim'
   }
-  if (personalBest) return 'text-accent'
   return 'text-text'
 }
 
@@ -34,7 +32,6 @@ export default function GanReadout({
   running,
   inspecting,
   inspectionCue,
-  personalBest,
   clickable,
   onButton,
   readoutRef,
@@ -53,7 +50,7 @@ export default function GanReadout({
       }}
       className={`timer-figures origin-center font-sans text-timer transition-transform duration-500 ease-out motion-reduce:transition-none ${
         running ? 'scale-[1.12]' : 'scale-100'
-      } ${ganTone(connected, running, inspecting, inspectionCue, personalBest)} ${
+      } ${ganTone(connected, running, inspecting, inspectionCue)} ${
         clickable ? 'cursor-pointer' : ''
       }`}
     />

@@ -11,4 +11,4 @@ export type Session = {
   solves: Solve[]
 }
 
-export type SessionPanel = 'none' | 'switcher' | 'create' | 'event' | 'type'
+export type SessionPanel = 'none' | 'create' | 'event' | 'type'

@@ -9,7 +9,7 @@ import type { SessionPanel as Panel } from '../sessions/types'
 import { useSessions } from '../sessions/useSessions'
 import { useSyncProcessor } from '../sync/useSyncProcessor'
 import SolveList from '../solves/SolveList'
-import { bestSingle, effectiveTime } from '../stats/engine'
+import { bestSingle } from '../stats/engine'
 import StatsBlock from '../stats/StatsBlock'
 import ManualReadout from '../timer/ManualReadout'
 import GanReadout from '../timer/GanReadout'
@@ -38,11 +38,7 @@ function writeInspectionEnabled(enabled: boolean) {
   }
 }
 
-function readoutTone(
-  phase: TimerPhase,
-  cue: InspectionCue,
-  personalBest: boolean,
-): string {
+function readoutTone(phase: TimerPhase, cue: InspectionCue): string {
   if (phase === 'holding') return 'text-text-dim'
   if (phase === 'ready') return 'text-accent'
   if (phase === 'inspecting') {
@@ -50,7 +46,6 @@ function readoutTone(
     if (cue >= 8) return 'text-text'
     return 'text-text-dim'
   }
-  if ((phase === 'stopped' || phase === 'idle') && personalBest) return 'text-accent'
   return 'text-text'
 }
 
@@ -119,7 +114,6 @@ export default function TimerPage() {
     running: ganRunning,
     inspecting: ganInspecting,
     inspectionCue: ganInspectionCue,
-    finishedMs: ganFinishedMs,
     connect: connectGanDevice,
     disconnect: disconnectGan,
     onButton: pressGanButton,
@@ -254,14 +248,6 @@ export default function TimerPage() {
   const focus = phase === 'running' || ganRunning
   const best = bestSingle(active?.solves ?? [])
   const pbMs = best.kind === 'numeric' ? best.ms : null
-  const lastSolve = active?.solves.at(-1)
-  const lastTime = lastSolve ? effectiveTime(lastSolve) : null
-  const stoppedPb =
-    (phase === 'stopped' || phase === 'idle') &&
-    !ganRunning &&
-    lastTime?.kind === 'numeric' &&
-    lastTime.ms === pbMs
-  const ganPb = !ganRunning && ganFinishedMs > 0 && ganFinishedMs === pbMs
   const chrome = focus
     ? 'pointer-events-none opacity-0 transition-opacity duration-500 ease-out'
     : 'opacity-100 transition-opacity duration-500 ease-out'
@@ -309,7 +295,9 @@ export default function TimerPage() {
         </svg>
       </Link>
 
-      <div className={`px-6 pt-6 md:absolute md:top-28 md:left-6 md:z-20 md:w-56 md:p-0 ${chrome}`}>
+      <div
+        className={`flex max-h-[42vh] flex-col px-6 pt-6 md:absolute md:top-28 md:bottom-8 md:left-6 md:z-20 md:max-h-none md:w-56 md:p-0 ${chrome}`}
+      >
         {active && (
           <SessionPanel
             sessions={sessions}
@@ -326,6 +314,29 @@ export default function TimerPage() {
             }}
           />
         )}
+        <div className="mt-3 flex min-h-0 flex-1 flex-col border-t border-border pt-3">
+          <div
+            ref={solveScrollRef}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          >
+            {active && (
+              <SolveList
+                solves={active.solves}
+                selectedId={selectedId}
+                personalBestMs={pbMs}
+                onSelect={(id) =>
+                  setSelectedId((current) => (current === id ? null : id))
+                }
+                onSetPenalty={setPenalty}
+                onDelete={(id) => {
+                  deleteSolve(id)
+                  setSelectedId(null)
+                }}
+              />
+            )}
+          </div>
+          {active && <StatsBlock solves={active.solves} />}
+        </div>
       </div>
 
       <header className={`px-6 pt-4 text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1 ${chrome}`}>
@@ -392,7 +403,7 @@ export default function TimerPage() {
             running={ganRunning}
             inspecting={ganInspecting}
             inspectionCue={ganInspectionCue}
-            personalBest={ganPb}
+            personalBest={false}
             clickable={ganStatus === 'connected' && !ganRunning}
             onButton={pressGanButton}
             readoutRef={setGanReadoutRef}
@@ -404,34 +415,10 @@ export default function TimerPage() {
             data-phase={phase}
             className={`timer-figures origin-center font-sans text-timer transition-transform duration-500 ease-out motion-reduce:transition-none ${
               focus ? 'scale-[1.12]' : 'scale-100'
-            } ${readoutTone(phase, inspectionCue, stoppedPb)}`}
+            } ${readoutTone(phase, inspectionCue)}`}
           />
         )}
       </section>
-
-      <aside className={`flex max-h-[50vh] flex-col px-6 pb-48 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[62vh] md:w-56 md:px-0 md:pb-0 ${chrome}`}>
-        <div
-          ref={solveScrollRef}
-          className="min-h-0 flex-auto overflow-y-auto overscroll-contain"
-        >
-          {active && (
-            <SolveList
-              solves={active.solves}
-              selectedId={selectedId}
-              personalBestMs={pbMs}
-              onSelect={(id) =>
-                setSelectedId((current) => (current === id ? null : id))
-              }
-              onSetPenalty={setPenalty}
-              onDelete={(id) => {
-                deleteSolve(id)
-                setSelectedId(null)
-              }}
-            />
-          )}
-        </div>
-        {active && <StatsBlock solves={active.solves} />}
-      </aside>
 
       <div className={`absolute right-5 bottom-5 z-10 flex flex-col items-end gap-2 ${chrome}`}>
         {preview && (

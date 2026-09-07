@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { ScrambleType } from '../scramble/types'
-import { defaultSessionName, eventLabel, WCA_EVENTS } from './events'
+import { defaultSessionName, WCA_EVENTS } from './events'
 import type { Session, SessionPanel as Panel } from './types'
 
 const SCRAMBLE_TYPES: ScrambleType[] = ['WCA']
@@ -51,53 +52,52 @@ export default function SessionPanel({
       <button
         type="button"
         tabIndex={-1}
-        data-session-name
-        onClick={() => onPanel(panel === 'switcher' ? 'none' : 'switcher')}
-        className="mt-1 block text-left text-base text-text"
-      >
-        {active.name}
-      </button>
-      <button
-        type="button"
-        tabIndex={-1}
         data-new-session
         onClick={openCreate}
-        className="mt-2 border border-border px-2 py-1 text-sm text-text-muted"
+        className="mt-1 border border-border px-2 py-1 text-sm text-text-muted"
       >
         new session
       </button>
-
-      {panel === 'switcher' && (
-        <div className="mt-3 flex flex-col items-start gap-1 text-sm text-text-dim">
+      <div className="relative mt-2">
+        <select
+          tabIndex={-1}
+          data-session-name
+          aria-label="session"
+          value={active.id}
+          onChange={(event) => onSwitch(event.target.value)}
+          className="w-full cursor-pointer appearance-none border border-border bg-transparent py-1 pr-6 pl-2 text-left text-base text-text outline-none"
+        >
           {sessions.map((session) => (
-            <button
-              type="button"
-              tabIndex={-1}
+            <option
               key={session.id}
+              value={session.id}
               data-session-option={session.id}
-              onClick={() => {
-                onSwitch(session.id)
-                onPanel('none')
-              }}
-              className={`text-left ${session.id === active.id ? 'text-accent' : ''}`}
             >
               {session.name}
-              <span className="text-text-muted"> {eventLabel(session.event)}</span>
-            </button>
+            </option>
           ))}
-        </div>
-      )}
-
-      {panel === 'create' && (
-        <div
-          className="fixed inset-0 z-30 flex items-center justify-center bg-bg/80"
-          onClick={() => onPanel('none')}
+        </select>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-text-muted"
         >
+          ▾
+        </span>
+      </div>
+
+      {panel === 'create' &&
+        createPortal(
           <div
             data-session-create
-            className="w-full max-w-md bg-elevated p-6 text-left"
-            onClick={(event) => event.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80"
+            onPointerDown={(event) => {
+              if (event.target === event.currentTarget) onPanel('none')
+            }}
           >
+            <div
+              className="w-full max-w-md bg-elevated p-6 text-left"
+              onPointerDown={(event) => event.stopPropagation()}
+            >
             <p className="text-xs uppercase tracking-wide text-text-muted">new session</p>
 
             <label className="mt-4 block text-xs text-text-muted" htmlFor="session-name">
@@ -106,7 +106,7 @@ export default function SessionPanel({
             <input
               id="session-name"
               data-session-name-input
-              tabIndex={-1}
+              autoFocus
               value={draftName}
               onChange={(event) => {
                 setNameTouched(true)
@@ -166,9 +166,10 @@ export default function SessionPanel({
                 cancel
               </button>
             </div>
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

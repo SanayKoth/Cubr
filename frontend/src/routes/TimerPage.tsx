@@ -12,7 +12,9 @@ import SolveList from '../solves/SolveList'
 import { bestSingle, effectiveTime } from '../stats/engine'
 import StatsBlock from '../stats/StatsBlock'
 import ManualReadout from '../timer/ManualReadout'
+import GanReadout from '../timer/GanReadout'
 import type { InspectionCue, TimerPhase, TimerResult } from '../timer/types'
+import { useGanTimer } from '../timer/useGanTimer'
 import { useTimer } from '../timer/useTimer'
 import { useTimerKeyboard } from '../timer/useTimerKeyboard'
 
@@ -112,10 +114,36 @@ export default function TimerPage() {
     onSolve: recordSolve,
   })
 
-  const setInputMode = useCallback((mode: TimerInputMode) => {
-    writeTimerInputMode(mode)
-    setInputModeState(mode)
-  }, [])
+  const {
+    status: ganStatus,
+    running: ganRunning,
+    inspecting: ganInspecting,
+    inspectionCue: ganInspectionCue,
+    finishedMs: ganFinishedMs,
+    connect: connectGanDevice,
+    disconnect: disconnectGan,
+    onButton: pressGanButton,
+    cancelInspection: cancelGanInspection,
+    setReadoutRef: setGanReadoutRef,
+  } = useGanTimer({
+    onStop: (timeMs) => recordSolve({ timeMs, penalty: 'NONE' }),
+  })
+
+  const setInputMode = useCallback(
+    (mode: TimerInputMode) => {
+      if (mode !== 'gan') disconnectGan()
+      writeTimerInputMode(mode)
+      setInputModeState(mode)
+    },
+    [disconnectGan],
+  )
+
+  const connectGan = useCallback(async () => {
+    const ok = await connectGanDevice()
+    if (!ok) return
+    writeTimerInputMode('gan')
+    setInputModeState('gan')
+  }, [connectGanDevice])
 
   const pressAndDismiss = useCallback(() => {
     setSelectedId(null)
@@ -140,6 +168,32 @@ export default function TimerPage() {
     cancel: cancelAndDismiss,
     enabled: !settingsOpen && inputMode === 'keyboard',
   })
+
+  useEffect(() => {
+    if (settingsOpen || inputMode !== 'gan') return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        cancelGanInspection()
+        return
+      }
+      if (event.repeat || event.code !== 'Space') return
+      if (event.target instanceof HTMLInputElement) return
+      if (ganRunning) return
+      event.preventDefault()
+      pressGanButton()
+    }
+
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [
+    cancelGanInspection,
+    ganRunning,
+    inputMode,
+    pressGanButton,
+    settingsOpen,
+  ])
 
   useEffect(() => {
     if (!settingsOpen && inputMode !== 'manual') return
@@ -176,8 +230,14 @@ export default function TimerPage() {
     }
   }
 
-  const regenerateAllowed = canRegenerate(phase)
-  const outletContext: SettingsOutletContext = { inputMode, setInputMode }
+  const regenerateAllowed = canRegenerate(phase) && !ganRunning && !ganInspecting
+  const outletContext: SettingsOutletContext = {
+    inputMode,
+    setInputMode,
+    ganStatus,
+    connectGan,
+    disconnectGan,
+  }
   const [heldPreview, setHeldPreview] = useState<{
     event: string
     moves: string
@@ -191,15 +251,17 @@ export default function TimerPage() {
   const preview = scramble
     ? { event: scramble.event, moves: scramble.moves }
     : heldPreview
-  const focus = phase === 'running'
+  const focus = phase === 'running' || ganRunning
   const best = bestSingle(active?.solves ?? [])
   const pbMs = best.kind === 'numeric' ? best.ms : null
   const lastSolve = active?.solves.at(-1)
   const lastTime = lastSolve ? effectiveTime(lastSolve) : null
   const stoppedPb =
     (phase === 'stopped' || phase === 'idle') &&
+    !ganRunning &&
     lastTime?.kind === 'numeric' &&
     lastTime.ms === pbMs
+  const ganPb = !ganRunning && ganFinishedMs > 0 && ganFinishedMs === pbMs
   const chrome = focus
     ? 'pointer-events-none opacity-0 transition-opacity duration-500 ease-out'
     : 'opacity-100 transition-opacity duration-500 ease-out'
@@ -209,6 +271,7 @@ export default function TimerPage() {
       data-ready={ready ? 'true' : 'false'}
       data-pre-ready-flushed={String(preReadyFlushed)}
       data-input-mode={inputMode}
+      data-gan-status={ganStatus}
       data-timer-focus={focus ? 'true' : 'false'}
       className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block"
     >
@@ -323,6 +386,17 @@ export default function TimerPage() {
             paused={settingsOpen}
             onRecord={(timeMs) => recordSolve({ timeMs, penalty: 'NONE' })}
           />
+        ) : inputMode === 'gan' ? (
+          <GanReadout
+            connected={ganStatus === 'connected'}
+            running={ganRunning}
+            inspecting={ganInspecting}
+            inspectionCue={ganInspectionCue}
+            personalBest={ganPb}
+            clickable={ganStatus === 'connected' && !ganRunning}
+            onButton={pressGanButton}
+            readoutRef={setGanReadoutRef}
+          />
         ) : (
           <div
             ref={setReadoutRef}
@@ -367,17 +441,19 @@ export default function TimerPage() {
             </Suspense>
           </div>
         )}
-        <button
-          type="button"
-          tabIndex={-1}
-          data-inspection
-          onClick={toggleInspection}
-          className={`text-sm ${
-            inspectionEnabled ? 'text-accent' : 'text-text-muted'
-          }`}
-        >
-          inspection: {inspectionEnabled ? 'on' : 'off'}
-        </button>
+        {inputMode !== 'gan' && (
+          <button
+            type="button"
+            tabIndex={-1}
+            data-inspection
+            onClick={toggleInspection}
+            className={`text-sm ${
+              inspectionEnabled ? 'text-accent' : 'text-text-muted'
+            }`}
+          >
+            inspection: {inspectionEnabled ? 'on' : 'off'}
+          </button>
+        )}
       </div>
 
       <Outlet context={outletContext} />

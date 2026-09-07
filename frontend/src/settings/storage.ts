@@ -5,7 +5,7 @@ const TIMER_INPUT_KEY = 'cubr.timerInput'
 export function readTimerInputMode(): TimerInputMode {
   try {
     const value = window.localStorage.getItem(TIMER_INPUT_KEY)
-    if (value === 'keyboard' || value === 'manual') return value
+    if (value === 'keyboard' || value === 'manual' || value === 'gan') return value
     return 'keyboard'
   } catch {
     return 'keyboard'

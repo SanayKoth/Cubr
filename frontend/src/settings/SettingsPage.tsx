@@ -3,12 +3,14 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import type { SettingsOutletContext, TimerInputMode } from './types'
 
 const MODES: { id: TimerInputMode; label: string }[] = [
-  { id: 'keyboard', label: 'keyboard' },
-  { id: 'manual', label: 'manual' },
+  { id: 'keyboard', label: 'Keyboard' },
+  { id: 'manual', label: 'Manual' },
+  { id: 'gan', label: 'Gan Timer' },
 ]
 
 export default function SettingsPage() {
-  const { inputMode, setInputMode } = useOutletContext<SettingsOutletContext>()
+  const { inputMode, setInputMode, ganStatus, connectGan } =
+    useOutletContext<SettingsOutletContext>()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -56,7 +58,14 @@ export default function SettingsPage() {
                 type="button"
                 key={mode.id}
                 data-input-mode={mode.id}
-                onClick={() => setInputMode(mode.id)}
+                data-gan-status={mode.id === 'gan' ? ganStatus : undefined}
+                onClick={() => {
+                  if (mode.id === 'gan') {
+                    void connectGan()
+                    return
+                  }
+                  setInputMode(mode.id)
+                }}
                 className={`w-full px-3 py-2.5 text-left text-lg ${
                   selected ? 'bg-elevated text-accent' : 'text-text'
                 }`}

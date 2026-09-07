@@ -4,7 +4,7 @@ import type {
   CreateSolveRequest,
   SessionResponse,
   SolveResponse,
-} from './types'
+} from './types.ts'
 
 /*
   The backend is called DIRECTLY (no Vite dev proxy) so this exercises the real
@@ -13,7 +13,12 @@ import type {
   local IndexedDB state.
 */
 const API_BASE_URL: string =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
+  import.meta.env.VITE_API_BASE_URL ??
+  (import.meta.env.DEV ? 'http://localhost:8080' : '')
+
+export function isRemoteSyncEnabled(): boolean {
+  return API_BASE_URL.length > 0
+}
 
 async function readError(response: Response, fallback: string): Promise<ApiError> {
   return new ApiError(response.status, `${fallback} failed with status ${response.status}`)

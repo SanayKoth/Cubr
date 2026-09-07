@@ -1,3 +1,4 @@
+import { isRemoteSyncEnabled } from '../api/client'
 import { wakeSyncProcessor } from '../sync/processor'
 import { db } from './db'
 import { isPersistenceEnabled, writeOnce } from './repository'
@@ -18,7 +19,7 @@ export function hasPostableScramble(scramble: string | null): scramble is string
 }
 
 async function enqueue(kind: SyncQueueKind, payload: SyncPayload) {
-  if (!isPersistenceEnabled()) return
+  if (!isPersistenceEnabled() || !isRemoteSyncEnabled()) return
   const item: SyncQueueItem = {
     id: crypto.randomUUID(),
     kind,

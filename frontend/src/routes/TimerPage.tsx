@@ -5,6 +5,7 @@ import SessionPanel from '../sessions/SessionPanel'
 import type { SessionPanel as Panel } from '../sessions/types'
 import { useSessions } from '../sessions/useSessions'
 import SolveList from '../solves/SolveList'
+import StatsBlock from '../stats/StatsBlock'
 import type { InspectionCue, TimerPhase, TimerResult } from '../timer/types'
 import { useTimer } from '../timer/useTimer'
 import { useTimerKeyboard } from '../timer/useTimerKeyboard'
@@ -46,7 +47,7 @@ export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [panel, setPanel] = useState<Panel>('none')
-  const solveScrollRef = useRef<HTMLElement>(null)
+  const solveScrollRef = useRef<HTMLDivElement>(null)
   const {
     sessions,
     active,
@@ -200,24 +201,25 @@ export default function TimerPage() {
         </button>
       </section>
 
-      <aside
-        ref={solveScrollRef}
-        className="max-h-[32vh] overflow-y-auto overscroll-contain px-6 pb-6 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[40vh] md:w-56 md:px-0 md:pb-0"
-      >
-        <SolveList
-          solves={active.solves}
-          selectedId={selectedId}
-          onSelect={(listId) =>
-            setSelectedId((current) => (current === listId ? null : listId))
-          }
-          onSetPenalty={setPenalty}
-          onDelete={(listId) => {
-            deleteSolve(listId)
-            setSelectedId(null)
-          }}
-        />
-        {/* Stats reserved for Step 6. Empty on purpose — no fake numbers. */}
-        <div data-stats-slot className="min-h-20" />
+      <aside className="flex max-h-[32vh] flex-col px-6 pb-6 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[40vh] md:w-56 md:px-0 md:pb-0">
+        <div
+          ref={solveScrollRef}
+          className="min-h-0 flex-auto overflow-y-auto overscroll-contain"
+        >
+          <SolveList
+            solves={active.solves}
+            selectedId={selectedId}
+            onSelect={(listId) =>
+              setSelectedId((current) => (current === listId ? null : listId))
+            }
+            onSetPenalty={setPenalty}
+            onDelete={(listId) => {
+              deleteSolve(listId)
+              setSelectedId(null)
+            }}
+          />
+        </div>
+        <StatsBlock solves={active.solves} />
       </aside>
     </main>
   )

@@ -88,10 +88,29 @@ async function processHead(): Promise<boolean> {
 
     const attempts = item.attempts + 1
     const message = error instanceof Error ? error.message : 'sync failed'
-    await db.syncQueue.update(item.id, { attempts, lastError: message })
-    if (status >= 400 && status < 500) {
-      console.error('Outbox item rejected', item.kind, status, message)
+
+    /*
+      Fix A: a solve 404 means its session is not on the server yet. Retrying
+      the head forever wedges the session POST behind it. Move this solve to
+      the end and let the next item run. If nothing else is queued, back off.
+    */
+    if (item.kind === 'solve' && status === 404) {
+      await db.syncQueue.update(item.id, {
+        createdAt: new Date().toISOString(),
+        attempts,
+        lastError: message,
+      })
+      const next = await db.syncQueue.orderBy('createdAt').first()
+      if (next !== undefined && next.id !== item.id) {
+        return true
+      }
+    } else {
+      await db.syncQueue.update(item.id, { attempts, lastError: message })
+      if (status >= 400 && status < 500) {
+        console.error('Outbox item rejected', item.kind, status, message)
+      }
     }
+
     cooldownUntil = Date.now() + backoffMs(attempts)
     schedule(backoffMs(attempts))
     return false

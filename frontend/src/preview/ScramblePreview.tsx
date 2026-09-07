@@ -66,7 +66,7 @@ export default function ScramblePreview({ event, moves }: ScramblePreviewProps) 
       experimentalMovePressInput: 'none',
       background: 'none',
       backView: 'none',
-      hintFacelets: 'none',
+      hintFacelets: 'floating',
     })
     player.style.width = '100%'
     player.style.height = '100%'

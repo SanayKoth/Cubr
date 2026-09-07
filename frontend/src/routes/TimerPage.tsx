@@ -45,10 +45,11 @@ function canRegenerate(phase: TimerPhase): boolean {
 
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [panel, setPanel] = useState<Panel>('none')
   const solveScrollRef = useRef<HTMLDivElement>(null)
   const {
+    ready,
     sessions,
     active,
     switchTo,
@@ -59,11 +60,11 @@ export default function TimerPage() {
     setPenalty,
     deleteSolve,
   } = useSessions()
-  const { current: scramble, consume } = useScramble(active.event)
+  const { current: scramble, consume } = useScramble(active?.event ?? '333')
 
   useEffect(() => {
     solveScrollRef.current?.scrollTo({ top: 0 })
-  }, [active.solves.length])
+  }, [active?.solves.length])
 
   const recordSolve = useCallback(
     (result: TimerResult) => {
@@ -71,7 +72,7 @@ export default function TimerPage() {
       appendSolve({
         timeMs: result.timeMs,
         penalty: result.penalty,
-        scrambleMoves: shown?.moves ?? null,
+        scramble: shown?.moves ?? null,
       })
       setSelectedId(null)
     },
@@ -135,26 +136,31 @@ export default function TimerPage() {
   const regenerateAllowed = canRegenerate(phase)
 
   return (
-    <main className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block">
+    <main
+      data-ready={ready ? 'true' : 'false'}
+      className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block"
+    >
       <h1 className="px-6 pt-6 font-brand text-3xl text-text md:absolute md:top-6 md:left-6 md:z-20 md:p-0">
         Cubr
       </h1>
 
       <div className="px-6 pt-6 md:absolute md:top-28 md:left-6 md:z-20 md:w-56 md:p-0">
-        <SessionPanel
-          sessions={sessions}
-          active={active}
-          panel={panel}
-          onPanel={setPanel}
-          onSwitch={(id) => {
-            switchTo(id)
-            setSelectedId(null)
-          }}
-          onCreate={(name, event, scrambleType) => {
-            addSession(name, event, scrambleType)
-            setSelectedId(null)
-          }}
-        />
+        {active && (
+          <SessionPanel
+            sessions={sessions}
+            active={active}
+            panel={panel}
+            onPanel={setPanel}
+            onSwitch={(id) => {
+              switchTo(id)
+              setSelectedId(null)
+            }}
+            onCreate={(name, event, scrambleType) => {
+              addSession(name, event, scrambleType)
+              setSelectedId(null)
+            }}
+          />
+        )}
       </div>
 
       <header className="px-6 pt-4 text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1">
@@ -171,13 +177,15 @@ export default function TimerPage() {
         >
           {scramble ? scramble.moves : 'generating…'}
         </button>
-        <EventTypeBar
-          active={active}
-          panel={panel}
-          onPanel={setPanel}
-          onChangeEvent={setEvent}
-          onChangeType={setScrambleType}
-        />
+        {active && (
+          <EventTypeBar
+            active={active}
+            panel={panel}
+            onPanel={setPanel}
+            onChangeEvent={setEvent}
+            onChangeType={setScrambleType}
+          />
+        )}
       </header>
 
       <section className="relative flex flex-1 items-center justify-center md:absolute md:inset-0">
@@ -201,25 +209,27 @@ export default function TimerPage() {
         </button>
       </section>
 
-      <aside className="flex max-h-[32vh] flex-col px-6 pb-6 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[40vh] md:w-56 md:px-0 md:pb-0">
+      <aside className="flex max-h-[50vh] flex-col px-6 pb-6 md:absolute md:top-auto md:right-auto md:bottom-8 md:left-6 md:z-10 md:max-h-[62vh] md:w-56 md:px-0 md:pb-0">
         <div
           ref={solveScrollRef}
           className="min-h-0 flex-auto overflow-y-auto overscroll-contain"
         >
-          <SolveList
-            solves={active.solves}
-            selectedId={selectedId}
-            onSelect={(listId) =>
-              setSelectedId((current) => (current === listId ? null : listId))
-            }
-            onSetPenalty={setPenalty}
-            onDelete={(listId) => {
-              deleteSolve(listId)
-              setSelectedId(null)
-            }}
-          />
+          {active && (
+            <SolveList
+              solves={active.solves}
+              selectedId={selectedId}
+              onSelect={(id) =>
+                setSelectedId((current) => (current === id ? null : id))
+              }
+              onSetPenalty={setPenalty}
+              onDelete={(id) => {
+                deleteSolve(id)
+                setSelectedId(null)
+              }}
+            />
+          )}
         </div>
-        <StatsBlock solves={active.solves} />
+        {active && <StatsBlock solves={active.solves} />}
       </aside>
     </main>
   )

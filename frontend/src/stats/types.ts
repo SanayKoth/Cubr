@@ -1,7 +1,7 @@
 import type { Penalty } from '../api/types'
 
 /*
-  A solve as the engine sees it. No listId, no scramble — those are UI/storage
+  A solve as the engine sees it. No id, no scramble — those are UI/storage
   fields and must not affect math.
 */
 export type TimedSolve = {

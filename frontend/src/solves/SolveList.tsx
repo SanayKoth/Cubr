@@ -4,10 +4,10 @@ import type { Solve } from './types'
 
 type SolveListProps = {
   solves: Solve[]
-  selectedId: number | null
-  onSelect: (listId: number) => void
-  onSetPenalty: (listId: number, penalty: Penalty) => void
-  onDelete: (listId: number) => void
+  selectedId: string | null
+  onSelect: (id: string) => void
+  onSetPenalty: (id: string, penalty: Penalty) => void
+  onDelete: (id: string) => void
 }
 
 /*
@@ -29,18 +29,18 @@ export default function SolveList({
     <ol data-solve-list className="text-lg">
       {newestFirst.map((solve, index) => {
         const number = solves.length - index
-        const selected = solve.listId === selectedId
+        const selected = solve.id === selectedId
         return (
-          <li key={solve.listId}>
+          <li key={solve.id}>
             <button
               type="button"
               tabIndex={-1}
-              title={solve.scrambleMoves ?? undefined}
-              data-solve-id={solve.listId}
+              title={solve.scramble ?? undefined}
+              data-solve-id={solve.id}
               data-time-ms={solve.timeMs}
               data-penalty={solve.penalty}
               data-selected={selected ? 'true' : 'false'}
-              onClick={() => onSelect(solve.listId)}
+              onClick={() => onSelect(solve.id)}
               className={`flex w-full items-baseline gap-3 py-1 text-left ${
                 selected ? 'text-text' : 'text-text-dim'
               }`}
@@ -61,7 +61,7 @@ export default function SolveList({
                   data-action="plus-two"
                   onClick={() =>
                     onSetPenalty(
-                      solve.listId,
+                      solve.id,
                       solve.penalty === 'PLUS_TWO' ? 'NONE' : 'PLUS_TWO',
                     )
                   }
@@ -75,7 +75,7 @@ export default function SolveList({
                   data-action="dnf"
                   onClick={() =>
                     onSetPenalty(
-                      solve.listId,
+                      solve.id,
                       solve.penalty === 'DNF' ? 'NONE' : 'DNF',
                     )
                   }
@@ -87,7 +87,7 @@ export default function SolveList({
                   type="button"
                   tabIndex={-1}
                   data-action="delete"
-                  onClick={() => onDelete(solve.listId)}
+                  onClick={() => onDelete(solve.id)}
                 >
                   delete
                 </button>

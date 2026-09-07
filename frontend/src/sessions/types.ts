@@ -7,6 +7,7 @@ export type Session = {
   event: string
   scrambleType: ScrambleType
   createdAt: string
+  updatedAt: string
   solves: Solve[]
 }
 

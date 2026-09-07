@@ -1,12 +1,19 @@
 import type { Penalty } from '../api/types'
 
 /*
-  In-memory solve only. listId is a page-local key for React, not a client UUID —
-  Step 7 introduces real IDs and a delete model (hard delete is fine until then).
+  Live solve row. Soft-deleted solves stay in IndexedDB and never appear here.
+  id is the client UUID (also what Step 8 will send). timeMs is always raw.
 */
 export type Solve = {
-  listId: number
+  id: string
   timeMs: number
   penalty: Penalty
-  scrambleMoves: string | null
+  scramble: string | null
+  timestamp: string
+}
+
+export type NewSolve = {
+  timeMs: number
+  penalty: Penalty
+  scramble: string | null
 }

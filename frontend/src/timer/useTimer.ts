@@ -49,6 +49,11 @@ export function useTimer({ inspectionEnabled, onSolve }: UseTimerOptions) {
     if (el) el.textContent = formatTime(timeMs)
   }, [])
 
+  const setReadoutRef = useCallback((node: HTMLDivElement | null) => {
+    readoutRef.current = node
+    if (node) node.textContent = formatTime(lastTimeMsRef.current)
+  }, [])
+
   const stopRaf = useCallback(() => {
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current)
@@ -147,7 +152,7 @@ export function useTimer({ inspectionEnabled, onSolve }: UseTimerOptions) {
   return {
     phase,
     inspectionCue,
-    readoutRef,
+    readoutRef: setReadoutRef,
     press,
     release,
     cancel,

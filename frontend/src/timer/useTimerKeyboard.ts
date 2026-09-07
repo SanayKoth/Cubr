@@ -6,6 +6,7 @@ type TimerKeyboardTarget = {
   press: () => void
   release: () => void
   cancel: () => void
+  enabled: boolean
 }
 
 /*
@@ -18,6 +19,7 @@ export function useTimerKeyboard({
   press,
   release,
   cancel,
+  enabled,
 }: TimerKeyboardTarget) {
   const phaseRef = useRef(phase)
   const pressRef = useRef(press)
@@ -32,6 +34,8 @@ export function useTimerKeyboard({
   }, [phase, press, release, cancel])
 
   useEffect(() => {
+    if (!enabled) return
+
     const held = new Set<string>()
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -77,5 +81,5 @@ export function useTimerKeyboard({
       window.removeEventListener('keydown', onKeyDown, true)
       window.removeEventListener('keyup', onKeyUp, true)
     }
-  }, [])
+  }, [enabled])
 }

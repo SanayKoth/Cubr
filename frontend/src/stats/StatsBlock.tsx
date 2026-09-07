@@ -20,7 +20,12 @@ export default function StatsBlock({ solves }: StatsBlockProps) {
         <span />
 
         <span className="text-text-muted">best</span>
-        <span data-stat="single-best" className="text-right font-sans text-text timer-figures">
+        <span
+          data-stat="single-best"
+          className={`text-right font-sans timer-figures ${
+            stats.bestSingle.kind === 'numeric' ? 'text-accent' : 'text-text'
+          }`}
+        >
           {formatStat(stats.bestSingle)}
         </span>
         <span />

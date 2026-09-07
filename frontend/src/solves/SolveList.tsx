@@ -1,13 +1,21 @@
 import type { Penalty } from '../api/types'
+import { effectiveTime } from '../stats/engine'
 import { formatSolveTime } from './format'
 import type { Solve } from './types'
 
 type SolveListProps = {
   solves: Solve[]
   selectedId: string | null
+  personalBestMs: number | null
   onSelect: (id: string) => void
   onSetPenalty: (id: string, penalty: Penalty) => void
   onDelete: (id: string) => void
+}
+
+function isPersonalBest(solve: Solve, personalBestMs: number | null): boolean {
+  if (personalBestMs === null) return false
+  const time = effectiveTime(solve)
+  return time.kind === 'numeric' && time.ms === personalBestMs
 }
 
 /*
@@ -17,6 +25,7 @@ type SolveListProps = {
 export default function SolveList({
   solves,
   selectedId,
+  personalBestMs,
   onSelect,
   onSetPenalty,
   onDelete,
@@ -30,6 +39,7 @@ export default function SolveList({
       {newestFirst.map((solve, index) => {
         const number = solves.length - index
         const selected = solve.id === selectedId
+        const pb = isPersonalBest(solve, personalBestMs)
         return (
           <li key={solve.id}>
             <button
@@ -39,6 +49,7 @@ export default function SolveList({
               data-solve-id={solve.id}
               data-time-ms={solve.timeMs}
               data-penalty={solve.penalty}
+              data-pb={pb ? 'true' : 'false'}
               data-selected={selected ? 'true' : 'false'}
               onClick={() => onSelect(solve.id)}
               className={`flex w-full items-baseline gap-3 py-1 text-left ${
@@ -48,7 +59,7 @@ export default function SolveList({
               <span className="w-6 shrink-0 text-right text-text-muted timer-figures">
                 {number}
               </span>
-              <span className="timer-figures">
+              <span className={`timer-figures ${pb ? 'text-accent' : ''}`}>
                 {formatSolveTime(solve.timeMs, solve.penalty)}
               </span>
             </button>

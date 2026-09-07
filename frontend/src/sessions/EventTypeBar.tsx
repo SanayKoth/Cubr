@@ -20,7 +20,7 @@ export default function EventTypeBar({
   onChangeType,
 }: EventTypeBarProps) {
   return (
-    <div data-scramble-meta className="mt-3 text-sm">
+    <div data-scramble-meta className="text-sm">
       <div className="flex items-center justify-center gap-3 text-text-muted">
         <button
           type="button"

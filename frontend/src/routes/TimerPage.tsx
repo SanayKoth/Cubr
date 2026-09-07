@@ -4,6 +4,7 @@ import EventTypeBar from '../sessions/EventTypeBar'
 import SessionPanel from '../sessions/SessionPanel'
 import type { SessionPanel as Panel } from '../sessions/types'
 import { useSessions } from '../sessions/useSessions'
+import { useSyncProcessor } from '../sync/useSyncProcessor'
 import SolveList from '../solves/SolveList'
 import StatsBlock from '../stats/StatsBlock'
 import type { InspectionCue, TimerPhase, TimerResult } from '../timer/types'
@@ -50,6 +51,7 @@ export default function TimerPage() {
   const solveScrollRef = useRef<HTMLDivElement>(null)
   const {
     ready,
+    preReadyFlushed,
     sessions,
     active,
     switchTo,
@@ -60,6 +62,7 @@ export default function TimerPage() {
     setPenalty,
     deleteSolve,
   } = useSessions()
+  useSyncProcessor(ready)
   const { current: scramble, consume } = useScramble(active?.event ?? '333')
 
   useEffect(() => {
@@ -138,6 +141,7 @@ export default function TimerPage() {
   return (
     <main
       data-ready={ready ? 'true' : 'false'}
+      data-pre-ready-flushed={String(preReadyFlushed)}
       className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block"
     >
       <h1 className="px-6 pt-6 font-brand text-3xl text-text md:absolute md:top-6 md:left-6 md:z-20 md:p-0">

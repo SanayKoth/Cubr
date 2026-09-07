@@ -1,19 +1,64 @@
-import type { SessionResponse } from './types'
+import { ApiError } from './errors'
+import type {
+  CreateSessionRequest,
+  CreateSolveRequest,
+  SessionResponse,
+  SolveResponse,
+} from './types'
 
 /*
   The backend is called DIRECTLY (no Vite dev proxy) so this exercises the real
-  cross-origin CORS path in development, the same shape it will use in
-  production. The base URL comes from VITE_API_BASE_URL, defaulting to the local
-  backend. Only the functions this step actually uses live here; more endpoints
-  are added in the steps that need them.
+  cross-origin CORS path. The processor is push-only: create/update via POST,
+  delete via DELETE. GET stays available for diagnostics and must not replace
+  local IndexedDB state.
 */
 const API_BASE_URL: string =
   import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
+async function readError(response: Response, fallback: string): Promise<ApiError> {
+  return new ApiError(response.status, `${fallback} failed with status ${response.status}`)
+}
+
 export async function getSessions(): Promise<SessionResponse[]> {
   const response = await fetch(`${API_BASE_URL}/api/sessions`)
   if (!response.ok) {
-    throw new Error(`GET /api/sessions failed with status ${response.status}`)
+    throw await readError(response, 'GET /api/sessions')
   }
   return (await response.json()) as SessionResponse[]
+}
+
+export async function createSession(body: CreateSessionRequest): Promise<SessionResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) {
+    throw await readError(response, 'POST /api/sessions')
+  }
+  return (await response.json()) as SessionResponse
+}
+
+export async function createSolve(
+  sessionId: string,
+  body: CreateSolveRequest,
+): Promise<SolveResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/sessions/${sessionId}/solves`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) {
+    throw await readError(response, `POST /api/sessions/${sessionId}/solves`)
+  }
+  return (await response.json()) as SolveResponse
+}
+
+export async function deleteSolve(solveId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/solves/${solveId}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok && response.status !== 404) {
+    throw await readError(response, `DELETE /api/solves/${solveId}`)
+  }
 }

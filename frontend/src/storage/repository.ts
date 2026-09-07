@@ -135,6 +135,16 @@ export async function persistSolveDeleted(id: string) {
   })
 }
 
+export async function getStoredSolve(id: string) {
+  if (!persistenceEnabled) return undefined
+  try {
+    return await db.solves.get(id)
+  } catch (error) {
+    console.error('IndexedDB read failed (solve)', error)
+    return undefined
+  }
+}
+
 export async function persistActiveId(id: string) {
   writeActiveSessionId(id)
 }

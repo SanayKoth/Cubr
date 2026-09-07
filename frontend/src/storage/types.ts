@@ -25,3 +25,35 @@ export type StoredSolve = {
   updatedAt: string
   deletedAt: string | null
 }
+
+export type SyncQueueKind = 'session' | 'solve' | 'delete-solve'
+
+export type SessionSyncPayload = {
+  id: string
+  name: string
+  event: string
+}
+
+export type SolveSyncPayload = {
+  sessionId: string
+  id: string
+  timeMs: number
+  scramble: string
+  timestamp: string
+  penalty: Penalty
+}
+
+export type DeleteSolvePayload = {
+  solveId: string
+}
+
+export type SyncPayload = SessionSyncPayload | SolveSyncPayload | DeleteSolvePayload
+
+export type SyncQueueItem = {
+  id: string
+  kind: SyncQueueKind
+  payload: SyncPayload
+  createdAt: string
+  attempts: number
+  lastError: string | null
+}

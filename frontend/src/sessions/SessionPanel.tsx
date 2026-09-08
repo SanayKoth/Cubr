@@ -46,6 +46,10 @@ export default function SessionPanel({
     onPanel('none')
   }
 
+  const listed = [...sessions].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  )
+
   return (
     <div data-session-ui>
       <p className="text-xs uppercase tracking-wide text-text-muted">session</p>
@@ -59,30 +63,52 @@ export default function SessionPanel({
         new session
       </button>
       <div className="relative mt-2">
-        <select
+        <button
+          type="button"
           tabIndex={-1}
           data-session-name
           aria-label="session"
-          value={active.id}
-          onChange={(event) => onSwitch(event.target.value)}
-          className="w-full cursor-pointer appearance-none border border-border bg-transparent py-1 pr-6 pl-2 text-left text-base text-text outline-none"
+          aria-haspopup="listbox"
+          aria-expanded={panel === 'session'}
+          onClick={() => onPanel(panel === 'session' ? 'none' : 'session')}
+          className="flex w-full cursor-pointer items-center justify-between gap-2 border border-border bg-transparent py-1 pr-2 pl-2 text-left text-base text-text outline-none"
         >
-          {sessions.map((session) => (
-            <option
-              key={session.id}
-              value={session.id}
-              data-session-option={session.id}
-            >
-              {session.name}
-            </option>
-          ))}
-        </select>
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-text-muted"
-        >
-          ▾
-        </span>
+          <span className="min-w-0 truncate">{active.name}</span>
+          <span aria-hidden="true" className="text-text-muted">
+            ▾
+          </span>
+        </button>
+        {panel === 'session' && (
+          <ul
+            role="listbox"
+            aria-label="session"
+            className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto overscroll-contain border border-border bg-elevated py-1"
+          >
+            {listed.map((session) => {
+              const selected = session.id === active.id
+              return (
+                <li key={session.id} role="none">
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    role="option"
+                    aria-selected={selected}
+                    data-session-option={session.id}
+                    onClick={() => {
+                      onSwitch(session.id)
+                      onPanel('none')
+                    }}
+                    className={`w-full truncate px-2 py-1.5 text-left text-base ${
+                      selected ? 'text-accent' : 'text-text-muted'
+                    }`}
+                  >
+                    {session.name}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </div>
 
       {panel === 'create' &&

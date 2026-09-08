@@ -142,7 +142,7 @@ export function useSessions() {
   const addSession = useCallback(
     (name: string, event: string, scrambleType: ScrambleType = 'WCA') => {
       const session = createSession(name, event, scrambleType)
-      setSessions((current) => [...current, session])
+      setSessions((current) => [session, ...current])
       activeIdRef.current = session.id
       setActiveId(session.id)
       persistActiveId(session.id)

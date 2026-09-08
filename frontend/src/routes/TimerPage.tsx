@@ -10,7 +10,8 @@ import { useSessions } from '../sessions/useSessions'
 import { useSyncProcessor } from '../sync/useSyncProcessor'
 import SolveList from '../solves/SolveList'
 import { formatSolveTime } from '../solves/format'
-import { bestSingle } from '../stats/engine'
+import { averageOfN, bestSingle } from '../stats/engine'
+import { formatStat } from '../stats/format'
 import StatsBlock from '../stats/StatsBlock'
 import ManualReadout from '../timer/ManualReadout'
 import GanReadout from '../timer/GanReadout'
@@ -266,6 +267,7 @@ export default function TimerPage() {
   const best = bestSingle(active?.solves ?? [])
   const pbMs = best.kind === 'numeric' ? best.ms : null
   const lastSolve = active?.solves.at(-1) ?? null
+  const ao5 = averageOfN(active?.solves ?? [], 5)
   const chrome = focus
     ? 'pointer-events-none opacity-0 transition-opacity duration-500 ease-out'
     : 'opacity-100 transition-opacity duration-500 ease-out'
@@ -457,32 +459,46 @@ export default function TimerPage() {
           inputMode === 'keyboard' ? 'touch-none' : ''
         }`}
       >
-        {inputMode === 'manual' ? (
-          <ManualReadout
-            paused={settingsOpen}
-            onRecord={(timeMs) => recordSolve({ timeMs, penalty: 'NONE' })}
-          />
-        ) : inputMode === 'gan' ? (
-          <GanReadout
-            connected={ganStatus === 'connected'}
-            running={ganRunning}
-            inspecting={ganInspecting}
-            inspectionCue={ganInspectionCue}
-            personalBest={false}
-            clickable={ganStatus === 'connected' && !ganRunning}
-            onButton={pressGanButton}
-            readoutRef={setGanReadoutRef}
-          />
-        ) : (
-          <div
-            ref={setReadoutRef}
-            role="timer"
-            data-phase={phase}
-            className={`timer-figures origin-center font-sans text-timer transition-transform duration-500 ease-out motion-reduce:transition-none ${
-              focus ? 'scale-[1.12]' : 'scale-100'
-            } ${readoutTone(phase, inspectionCue)}`}
-          />
-        )}
+        <div className="flex flex-col items-center">
+          {inputMode === 'manual' ? (
+            <ManualReadout
+              paused={settingsOpen}
+              onRecord={(timeMs) => recordSolve({ timeMs, penalty: 'NONE' })}
+            />
+          ) : inputMode === 'gan' ? (
+            <GanReadout
+              connected={ganStatus === 'connected'}
+              running={ganRunning}
+              inspecting={ganInspecting}
+              inspectionCue={ganInspectionCue}
+              personalBest={false}
+              clickable={ganStatus === 'connected' && !ganRunning}
+              onButton={pressGanButton}
+              readoutRef={setGanReadoutRef}
+            />
+          ) : (
+            <div
+              ref={setReadoutRef}
+              role="timer"
+              data-phase={phase}
+              className={`timer-figures origin-center font-sans text-timer transition-transform duration-500 ease-out motion-reduce:transition-none ${
+                focus ? 'scale-[1.12]' : 'scale-100'
+              } ${readoutTone(phase, inspectionCue)}`}
+            />
+          )}
+          <p
+            data-ao5
+            className={`mt-3 text-base ${chrome}`}
+          >
+            <span className="text-text-muted">ao5</span>
+            <span
+              data-stat="ao5-glance"
+              className="ml-2 font-sans text-text-dim timer-figures"
+            >
+              {formatStat(ao5)}
+            </span>
+          </p>
+        </div>
       </section>
 
       <div

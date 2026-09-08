@@ -92,7 +92,7 @@ export async function loadLiveSessions(): Promise<Session[] | null> {
   try {
     const rows = (await db.sessions.toArray())
       .filter((session) => session.deletedAt == null)
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
     const sessions: Session[] = []
     for (const row of rows) {

@@ -37,6 +37,23 @@
 
   /* Spacing base — Tailwind derives the numeric spacing scale from this */
   --spacing: 0.25rem;
+
+  --animate-inspect-flash: inspect-flash 0.9s ease-out forwards;
+}
+
+@keyframes inspect-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
 }
 
 /*
@@ -62,5 +79,19 @@
     color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes inspect-flash {
+    0% {
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
   }
 }

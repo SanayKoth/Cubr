@@ -3,6 +3,7 @@ import type { GanStatus } from '../settings/types'
 import { formatInspectionSeconds, formatTime } from './format'
 import { inspectionCueAt } from './machine'
 import type { InspectionCue } from './types'
+import { playInspectionCue, warmInspectionSound } from './inspectionCueSound'
 
 type GanDevice = EventTarget & {
   disconnect: () => void
@@ -155,6 +156,7 @@ export function useGanTimer({ onStop }: UseGanTimerOptions) {
     const cue = inspectionCueAt(start, start + elapsedMs)
     if (cue !== cueRef.current) {
       cueRef.current = cue
+      if (cue === 8 || cue === 12) playInspectionCue(cue)
       setInspectionCue(cue)
     }
   }, [])
@@ -211,6 +213,7 @@ export function useGanTimer({ onStop }: UseGanTimerOptions) {
     if (runningRef.current) return
     if (statusRef.current !== 'connected') return
     if (shownMsRef.current > 0) return
+    warmInspectionSound()
     inspectingRef.current = true
     inspectStartRef.current = performance.now()
     cueRef.current = 0

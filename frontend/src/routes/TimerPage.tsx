@@ -20,6 +20,7 @@ import { useGanTimer } from '../timer/useGanTimer'
 import { useTimer } from '../timer/useTimer'
 import { useTimerKeyboard } from '../timer/useTimerKeyboard'
 import { useTimerPointer } from '../timer/useTimerPointer'
+import { useInspectionAlert } from '../timer/useInspectionAlert'
 
 const ScramblePreview = lazy(() => import('../preview/ScramblePreview'))
 
@@ -176,6 +177,10 @@ export default function TimerPage() {
     release,
     enabled: pointerEnabled,
   })
+
+  const inspectFlash = useInspectionAlert(
+    inputMode === 'gan' ? ganInspectionCue : inspectionCue,
+  )
 
   useEffect(() => {
     if (settingsOpen || inputMode !== 'gan') return
@@ -527,6 +532,17 @@ export default function TimerPage() {
       </div>
 
       <Outlet context={outletContext} />
+
+      {inspectFlash !== null && (
+        <div
+          data-inspection-alert={inspectFlash}
+          className="pointer-events-none absolute inset-0 z-[15] flex items-center justify-center bg-accent/20 animate-inspect-flash"
+        >
+          <span className="font-sans text-timer text-accent timer-figures scale-[2.2]">
+            {inspectFlash}
+          </span>
+        </div>
+      )}
     </main>
   )
 }

@@ -12,6 +12,7 @@ import {
 import type { TimerMachineState } from './machine'
 import { HOLD_THRESHOLD_MS } from './types'
 import type { InspectionCue, TimerPhase, UseTimerOptions } from './types'
+import { playInspectionCue, warmInspectionSound } from './inspectionCueSound'
 
 /*
   Headless timer. Knows nothing about sessions, layout, or the API client.
@@ -76,6 +77,7 @@ export function useTimer({ inspectionEnabled, onSolve }: UseTimerOptions) {
       const cue = inspectionCueAt(state.inspectStart, now)
       if (cue !== cueRef.current) {
         cueRef.current = cue
+        if (cue === 8 || cue === 12) playInspectionCue(cue)
         setInspectionCue(cue)
       }
     }
@@ -122,6 +124,7 @@ export function useTimer({ inspectionEnabled, onSolve }: UseTimerOptions) {
   )
 
   const press = useCallback(() => {
+    warmInspectionSound()
     apply(onPress(stateRef.current, performance.now(), inspectionEnabledRef.current))
   }, [apply])
 

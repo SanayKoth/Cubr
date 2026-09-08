@@ -21,6 +21,7 @@ import { useTimer } from '../timer/useTimer'
 import { useTimerKeyboard } from '../timer/useTimerKeyboard'
 import { useTimerPointer } from '../timer/useTimerPointer'
 import { useInspectionAlert } from '../timer/useInspectionAlert'
+import InspectionTrack from '../timer/InspectionTrack'
 
 const ScramblePreview = lazy(() => import('../preview/ScramblePreview'))
 
@@ -269,11 +270,18 @@ export default function TimerPage() {
     ? { event: scramble.event, moves: scramble.moves }
     : heldPreview
   const focus = phase === 'running' || ganRunning
+  const inspectLive =
+    ganInspecting ||
+    phase === 'inspecting' ||
+    (inspectionEnabled &&
+      inputMode === 'keyboard' &&
+      (phase === 'holding' || phase === 'ready'))
+  const hideChrome = focus || inspectLive
   const best = bestSingle(active?.solves ?? [])
   const pbMs = best.kind === 'numeric' ? best.ms : null
   const lastSolve = active?.solves.at(-1) ?? null
   const ao5 = averageOfN(active?.solves ?? [], 5)
-  const chrome = focus
+  const chrome = hideChrome
     ? 'pointer-events-none opacity-0 transition-opacity duration-500 ease-out'
     : 'opacity-100 transition-opacity duration-500 ease-out'
 
@@ -283,7 +291,7 @@ export default function TimerPage() {
       data-pre-ready-flushed={String(preReadyFlushed)}
       data-input-mode={inputMode}
       data-gan-status={ganStatus}
-      data-timer-focus={focus ? 'true' : 'false'}
+      data-timer-focus={hideChrome ? 'true' : 'false'}
       className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block"
     >
       <h1
@@ -296,8 +304,8 @@ export default function TimerPage() {
         to="/settings"
         aria-label="settings"
         data-settings
-        aria-hidden={focus}
-        tabIndex={focus ? -1 : undefined}
+        aria-hidden={hideChrome}
+        tabIndex={hideChrome ? -1 : undefined}
         className={`absolute top-[max(1.25rem,env(safe-area-inset-top))] right-[max(1.25rem,env(safe-area-inset-right))] z-20 flex size-12 items-center justify-center text-text outline-none md:top-5 md:right-5 ${chrome}`}
       >
         <svg
@@ -465,32 +473,35 @@ export default function TimerPage() {
         }`}
       >
         <div className="flex flex-col items-center">
-          {inputMode === 'manual' ? (
-            <ManualReadout
-              paused={settingsOpen}
-              onRecord={(timeMs) => recordSolve({ timeMs, penalty: 'NONE' })}
-            />
-          ) : inputMode === 'gan' ? (
-            <GanReadout
-              connected={ganStatus === 'connected'}
-              running={ganRunning}
-              inspecting={ganInspecting}
-              inspectionCue={ganInspectionCue}
-              personalBest={false}
-              clickable={ganStatus === 'connected' && !ganRunning}
-              onButton={pressGanButton}
-              readoutRef={setGanReadoutRef}
-            />
-          ) : (
-            <div
-              ref={setReadoutRef}
-              role="timer"
-              data-phase={phase}
-              className={`timer-figures origin-center font-sans text-timer transition-transform duration-500 ease-out motion-reduce:transition-none ${
-                focus ? 'scale-[1.12]' : 'scale-100'
-              } ${readoutTone(phase, inspectionCue)}`}
-            />
-          )}
+          <div className="relative">
+            {inspectLive && <InspectionTrack />}
+            {inputMode === 'manual' ? (
+              <ManualReadout
+                paused={settingsOpen}
+                onRecord={(timeMs) => recordSolve({ timeMs, penalty: 'NONE' })}
+              />
+            ) : inputMode === 'gan' ? (
+              <GanReadout
+                connected={ganStatus === 'connected'}
+                running={ganRunning}
+                inspecting={ganInspecting}
+                inspectionCue={ganInspectionCue}
+                personalBest={false}
+                clickable={ganStatus === 'connected' && !ganRunning}
+                onButton={pressGanButton}
+                readoutRef={setGanReadoutRef}
+              />
+            ) : (
+              <div
+                ref={setReadoutRef}
+                role="timer"
+                data-phase={phase}
+                className={`relative z-10 timer-figures origin-center font-sans text-timer transition-transform duration-500 ease-out motion-reduce:transition-none ${
+                  focus ? 'scale-[1.12]' : 'scale-100'
+                } ${readoutTone(phase, inspectionCue)}`}
+              />
+            )}
+          </div>
           <p
             data-ao5
             className={`mt-3 text-base ${chrome}`}

@@ -39,6 +39,7 @@
   --spacing: 0.25rem;
 
   --animate-inspect-flash: inspect-flash 0.9s ease-out forwards;
+  --animate-inspect-drain: inspect-drain 15s linear forwards;
 }
 
 @keyframes inspect-flash {
@@ -54,6 +55,19 @@
     opacity: 0;
     transform: scale(1.06);
   }
+}
+
+@keyframes inspect-drain {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 1;
+  }
+}
+
+@utility inspect-drain {
+  animation: var(--animate-inspect-drain);
 }
 
 /*

@@ -1,5 +1,5 @@
 import type { Penalty } from '../api/types'
-import type { ScrambleType } from '../scramble/types'
+import { normalizeScrambleType } from '../scramble/catalog'
 import type { Session } from '../sessions/types'
 import type { Solve } from '../solves/types'
 import { writeActiveSessionId } from './activeSession'
@@ -60,7 +60,7 @@ function toSession(row: StoredSession, solves: StoredSolve[]): Session {
     id: row.id,
     name: row.name,
     event: row.event,
-    scrambleType: row.scrambleType as ScrambleType,
+    scrambleType: normalizeScrambleType(row.scrambleType),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     solves: solves.map((solve) => ({

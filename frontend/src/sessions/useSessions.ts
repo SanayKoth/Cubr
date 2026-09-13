@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Penalty } from '../api/types'
+import { coerceScrambleType } from '../scramble/catalog'
 import type { ScrambleType } from '../scramble/types'
 import type { NewSolve, Solve } from '../solves/types'
 import { readActiveSessionId } from '../storage/activeSession'
@@ -155,13 +156,16 @@ export function useSessions() {
 
   const setEvent = useCallback((event: string) => {
     const now = new Date().toISOString()
+    const scrambleType = coerceScrambleType(event, active?.scrambleType ?? 'WCA')
     setSessions((current) =>
       current.map((session) =>
-        session.id === activeId ? { ...session, event, updatedAt: now } : session,
+        session.id === activeId
+          ? { ...session, event, scrambleType, updatedAt: now }
+          : session,
       ),
     )
     if (active) {
-      const next = { ...active, event, updatedAt: now }
+      const next = { ...active, event, scrambleType, updatedAt: now }
       void persistSession(next)
       void enqueueSession(sessionPayload(next))
     }

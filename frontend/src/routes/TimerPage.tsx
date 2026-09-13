@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useMatch } from 'react-router-dom'
+import { stickeringFor } from '../scramble/catalog'
 import { useScramble } from '../scramble/useScramble'
 import { readTimerInputMode, writeTimerInputMode } from '../settings/storage'
 import type { SettingsOutletContext, TimerInputMode } from '../settings/types'
@@ -91,6 +92,7 @@ export default function TimerPage() {
   useSyncProcessor(ready)
   const { current: scramble, consume, skip, back, canGoBack } = useScramble(
     active?.event ?? '333',
+    active?.scrambleType ?? 'WCA',
   )
 
   useEffect(() => {
@@ -222,6 +224,7 @@ export default function TimerPage() {
       if (event.target.closest('[data-session-ui]')) return
       if (event.target.closest('[data-session-create]')) return
       if (event.target.closest('[data-scramble-meta]')) return
+      if (event.target.closest('[data-scramble-picker]')) return
       if (event.target.closest('[data-scramble-nav]')) return
       if (event.target.closest('[data-scramble-preview]')) return
       if (event.target.closest('[data-settings]')) return
@@ -259,15 +262,26 @@ export default function TimerPage() {
   const [heldPreview, setHeldPreview] = useState<{
     event: string
     moves: string
+    stickering: string | null
   } | null>(null)
   if (
     scramble &&
-    (heldPreview?.event !== scramble.event || heldPreview.moves !== scramble.moves)
+    (heldPreview?.event !== scramble.event ||
+      heldPreview.moves !== scramble.moves ||
+      heldPreview.stickering !== stickeringFor(scramble.scrambleType))
   ) {
-    setHeldPreview({ event: scramble.event, moves: scramble.moves })
+    setHeldPreview({
+      event: scramble.event,
+      moves: scramble.moves,
+      stickering: stickeringFor(scramble.scrambleType),
+    })
   }
   const preview = scramble
-    ? { event: scramble.event, moves: scramble.moves }
+    ? {
+        event: scramble.event,
+        moves: scramble.moves,
+        stickering: stickeringFor(scramble.scrambleType),
+      }
     : heldPreview
   const focus = phase === 'running' || ganRunning
   const inspectLive =
@@ -431,7 +445,7 @@ export default function TimerPage() {
         </button>
         <div
           data-scramble-nav
-          className="mt-2 flex items-start justify-center gap-6 text-sm"
+          className="mt-2 flex items-center justify-center gap-6 text-sm"
         >
           <button
             type="button"
@@ -440,7 +454,7 @@ export default function TimerPage() {
             onClick={() => {
               if (regenerateAllowed) back()
             }}
-            className="text-text-dim disabled:text-text-muted disabled:cursor-default"
+            className="inline-flex min-h-11 min-w-14 items-center justify-center px-3 text-text-dim disabled:text-text-muted disabled:cursor-default"
           >
             last
           </button>
@@ -460,7 +474,7 @@ export default function TimerPage() {
             onClick={() => {
               if (regenerateAllowed) skip()
             }}
-            className="text-text-dim disabled:text-text-muted disabled:cursor-default"
+            className="inline-flex min-h-11 min-w-14 items-center justify-center px-3 text-text-dim disabled:text-text-muted disabled:cursor-default"
           >
             next
           </button>
@@ -523,7 +537,11 @@ export default function TimerPage() {
         {preview && (
           <div className="h-20 w-20 md:h-44 md:w-44">
             <Suspense fallback={null}>
-              <ScramblePreview event={preview.event} moves={preview.moves} />
+              <ScramblePreview
+                event={preview.event}
+                moves={preview.moves}
+                stickering={preview.stickering}
+              />
             </Suspense>
           </div>
         )}

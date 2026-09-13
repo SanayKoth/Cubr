@@ -7,6 +7,7 @@ const CONTROL_SELECTOR = [
   '[data-scramble]',
   '[data-scramble-nav]',
   '[data-scramble-meta]',
+  '[data-scramble-picker]',
   '[data-scramble-preview]',
   '[data-settings]',
   '[data-inspection]',

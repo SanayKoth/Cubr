@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { allowedTypes } from '../scramble/catalog'
+import ScrambleTypeGroups from '../scramble/TypeGroups'
 import type { ScrambleType } from '../scramble/types'
 import { defaultSessionName, WCA_EVENTS } from './events'
 import type { Session, SessionPanel as Panel } from './types'
-
-const SCRAMBLE_TYPES: ScrambleType[] = ['WCA']
 
 type SessionPanelProps = {
   sessions: Session[]
@@ -38,6 +38,7 @@ export default function SessionPanel({
 
   const pickEvent = (event: string) => {
     setDraftEvent(event)
+    setDraftType((type) => (allowedTypes(event).includes(type) ? type : 'WCA'))
     if (!nameTouched) setDraftName(defaultSessionName(event))
   }
 
@@ -158,19 +159,13 @@ export default function SessionPanel({
             </div>
 
             <p className="mt-5 text-xs text-text-muted">scramble type</p>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-              {SCRAMBLE_TYPES.map((type) => (
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  key={type}
-                  data-create-type={type}
-                  onClick={() => setDraftType(type)}
-                  className={draftType === type ? 'text-accent' : 'text-text-muted'}
-                >
-                  {type}
-                </button>
-              ))}
+            <div className="mt-2 text-sm">
+              <ScrambleTypeGroups
+                event={draftEvent}
+                selected={draftType}
+                optionAttr="data-create-type"
+                onPick={setDraftType}
+              />
             </div>
 
             <div className="mt-6 flex gap-4 text-sm">

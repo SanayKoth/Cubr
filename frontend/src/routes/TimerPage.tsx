@@ -369,7 +369,7 @@ export default function TimerPage() {
         <div
           data-times-backdrop
           aria-hidden
-          className="fixed inset-0 z-[25] bg-bg/80 md:hidden"
+          className="fixed inset-0 z-[25] bg-bg/50 md:hidden"
         />
       )}
 
@@ -377,9 +377,9 @@ export default function TimerPage() {
         data-times-sheet
         className={`${
           sheetOpen
-            ? 'fixed inset-x-0 bottom-0 z-30 flex max-h-[min(80vh,calc(100dvh-env(safe-area-inset-top)-2rem))] min-h-0 flex-col border-t border-border bg-bg px-6 pt-4 pb-[max(5.75rem,calc(env(safe-area-inset-bottom)+4.75rem))] touch-auto'
+            ? 'fixed z-30 flex min-h-0 flex-col touch-auto max-md:inset-x-[max(1rem,env(safe-area-inset-left))] max-md:right-[max(1rem,env(safe-area-inset-right))] max-md:bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] max-md:max-h-[min(62vh,calc(100dvh-8.5rem))] max-md:overflow-hidden max-md:rounded-3xl max-md:px-4 max-md:pt-3 max-md:pb-3 max-md:glass-dock'
             : 'hidden'
-        } md:absolute md:inset-auto md:top-28 md:bottom-24 md:left-6 md:z-20 md:flex md:max-h-none md:w-56 md:flex-col md:border-0 md:bg-transparent md:p-0 md:touch-auto ${chrome}`}
+        } md:absolute md:inset-auto md:top-28 md:bottom-60 md:left-6 md:z-20 md:flex md:max-h-none md:w-56 md:flex-col md:overflow-visible md:rounded-none md:border-0 md:bg-transparent md:p-0 md:touch-auto ${chrome}`}
       >
         {active && (
           <SessionPanel
@@ -397,10 +397,10 @@ export default function TimerPage() {
             }}
           />
         )}
-        <div className="mt-3 flex min-h-0 flex-1 flex-col border-t border-border pt-3">
+        <div className="mt-3 flex min-h-0 flex-1 flex-col max-md:border-t max-md:border-text/8 md:border-t md:border-border pt-3">
           <div
             ref={solveScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain max-md:max-h-[min(36vh,18rem)]"
           >
             {active && (
               <SolveList

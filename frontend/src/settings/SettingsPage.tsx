@@ -26,14 +26,14 @@ export default function SettingsPage() {
   return (
     <div
       data-settings
-      className="fixed inset-0 z-40 flex items-center justify-center bg-bg/70 px-6 backdrop-blur-md"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-bg/25 px-6 backdrop-blur-sm"
       onClick={() => navigate('/')}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-title"
-        className="glass-panel w-full max-w-md rounded-3xl p-8 text-text"
+        className="w-full max-w-md rounded-3xl border border-text/10 bg-bg/40 p-8 text-text backdrop-blur-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-baseline justify-between gap-4">

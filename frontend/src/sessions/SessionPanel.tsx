@@ -53,17 +53,21 @@ export default function SessionPanel({
 
   return (
     <div data-session-ui>
-      <p className="text-xs uppercase tracking-wide text-text-muted">session</p>
-      <button
-        type="button"
-        tabIndex={-1}
-        data-new-session
-        onClick={openCreate}
-        className="mt-1 border border-border px-2 py-1 text-sm text-text-muted"
-      >
-        new session
-      </button>
-      <div className="relative mt-2">
+      <div className="flex items-center gap-2 md:block">
+        <p className="hidden text-xs uppercase tracking-wide text-text-muted md:block">
+          session
+        </p>
+        <button
+          type="button"
+          tabIndex={-1}
+          data-new-session
+          onClick={openCreate}
+          className="order-2 shrink-0 text-sm text-text-muted max-md:rounded-xl max-md:px-2.5 max-md:py-2 max-md:bg-text/8 md:order-none md:mt-1 md:border md:border-border md:px-2 md:py-1"
+        >
+          <span className="md:hidden">new</span>
+          <span className="hidden md:inline">new session</span>
+        </button>
+        <div className="relative order-1 min-w-0 flex-1 md:order-none md:mt-2">
         <button
           type="button"
           tabIndex={-1}
@@ -72,7 +76,7 @@ export default function SessionPanel({
           aria-haspopup="listbox"
           aria-expanded={panel === 'session'}
           onClick={() => onPanel(panel === 'session' ? 'none' : 'session')}
-          className="flex w-full cursor-pointer items-center justify-between gap-2 border border-border bg-transparent py-1 pr-2 pl-2 text-left text-base text-text outline-none"
+          className="flex w-full cursor-pointer items-center justify-between gap-2 bg-transparent text-left text-base text-text outline-none max-md:rounded-xl max-md:bg-text/8 max-md:py-2 max-md:pr-3 max-md:pl-3 md:border md:border-border md:py-1 md:pr-2 md:pl-2"
         >
           <span className="min-w-0 truncate">{active.name}</span>
           <span aria-hidden="true" className="text-text-muted">
@@ -83,7 +87,7 @@ export default function SessionPanel({
           <ul
             role="listbox"
             aria-label="session"
-            className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto overscroll-contain border border-border bg-elevated py-1"
+            className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto overscroll-contain border border-border bg-elevated py-1 max-md:rounded-xl"
           >
             {listed.map((session) => {
               const selected = session.id === active.id
@@ -110,6 +114,7 @@ export default function SessionPanel({
             })}
           </ul>
         )}
+        </div>
       </div>
 
       {panel === 'create' &&

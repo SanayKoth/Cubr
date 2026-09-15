@@ -5,15 +5,16 @@ import { formatStat } from './format'
 
 type StatsBlockProps = {
   solves: readonly TimedSolve[]
+  className?: string
 }
 
-export default function StatsBlock({ solves }: StatsBlockProps) {
+export default function StatsBlock({ solves, className = '' }: StatsBlockProps) {
   const stats = computeSessionStats(solves)
 
   return (
     <div
       data-stats-slot
-      className="mt-3 w-fit shrink-0 border-t border-border pt-3 text-sm"
+      className={`mt-3 w-fit shrink-0 border-t border-border pt-3 text-sm max-md:mt-2 max-md:pt-2 max-md:text-xs md:fixed md:bottom-6 md:left-6 md:z-20 md:mt-0 md:w-56 ${className}`}
     >
       <div className="grid grid-cols-[3rem_4rem_4rem] items-baseline gap-x-3 gap-y-1">
         <span className="text-text-muted">mean</span>
@@ -33,11 +34,11 @@ export default function StatsBlock({ solves }: StatsBlockProps) {
         </span>
         <span />
 
-        <span className="mt-2" />
-        <span className="mt-2 text-right text-xs uppercase tracking-wide text-text-muted">
+        <span className="mt-2 max-md:hidden" />
+        <span className="mt-2 text-right text-xs uppercase tracking-wide text-text-muted max-md:hidden">
           current
         </span>
-        <span className="mt-2 text-right text-xs uppercase tracking-wide text-text-muted">
+        <span className="mt-2 text-right text-xs uppercase tracking-wide text-text-muted max-md:hidden">
           best
         </span>
 
@@ -80,11 +81,11 @@ function AoRow({
 }) {
   return (
     <>
-      <span className="text-text-muted">{label}</span>
-      <span data-stat={currentAttr} className="text-right font-sans text-text timer-figures">
+      <span className="text-text-muted max-md:hidden">{label}</span>
+      <span data-stat={currentAttr} className="text-right font-sans text-text timer-figures max-md:hidden">
         {current}
       </span>
-      <span data-stat={bestAttr} className="text-right font-sans timer-figures text-text-dim">
+      <span data-stat={bestAttr} className="text-right font-sans timer-figures text-text-dim max-md:hidden">
         {best}
       </span>
     </>

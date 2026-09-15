@@ -1,6 +1,7 @@
 import { KPattern, type KPatternData, type KPuzzle } from 'cubing/kpuzzle'
 import { cube3x3x3 } from 'cubing/puzzles'
 import { experimentalSolve3x3x3IgnoringCenters } from 'cubing/search'
+import { canonicalMoves } from './notation'
 import type { ScrambleType } from './types'
 
 /*
@@ -53,11 +54,16 @@ type Mask = {
   orientedCorners?: readonly number[]
 }
 
-type MaskId = 'cross' | 'f2l' | 'll' | 'pll' | 'zbll' | 'cmll' | 'l6e'
+type MaskId = 'f2l' | 'll' | 'pll' | 'zbll' | 'cmll' | 'l6e'
 
+/*
+  Mask = pieces that stay solved in the scrambled state.
+  The unsolved remainder is the step you are practicing.
+  F2L: the cross is done; pairs + last layer are unsolved.
+  OLL: F2L is done; last layer is unsolved.
+*/
 const MASKS: Record<MaskId, Mask> = {
-  cross: { solvedEdges: D_EDGES, solvedCorners: [] },
-  f2l: { solvedEdges: F2L_EDGES, solvedCorners: D_CORNERS },
+  f2l: { solvedEdges: D_EDGES, solvedCorners: [] },
   ll: { solvedEdges: F2L_EDGES, solvedCorners: D_CORNERS },
   pll: {
     solvedEdges: F2L_EDGES,
@@ -78,7 +84,6 @@ const MASKS: Record<MaskId, Mask> = {
 }
 
 const MASK_BY_TYPE: Record<Exclude<ScrambleType, 'WCA'>, MaskId> = {
-  Cross: 'cross',
   F2L: 'f2l',
   OLL: 'll',
   PLL: 'pll',
@@ -227,7 +232,7 @@ export async function generateSubsetScramble(type: Exclude<ScrambleType, 'WCA'>)
     try {
       const pattern = applyMask(kpuzzle, mask)
       const solution = await experimentalSolve3x3x3IgnoringCenters(pattern)
-      return solution.invert().toString()
+      return canonicalMoves(solution.invert().toString())
     } catch (error) {
       lastError = error
     }

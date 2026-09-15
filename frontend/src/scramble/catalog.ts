@@ -9,7 +9,7 @@ export type ScrambleTypeGroup = {
 
 export const SCRAMBLE_TYPE_GROUPS: readonly ScrambleTypeGroup[] = [
   { label: 'WCA', types: ['WCA'] },
-  { label: 'CFOP', types: ['Cross', 'F2L', 'OLL', 'PLL', 'ZBLL'] },
+  { label: 'CFOP', types: ['F2L', 'OLL', 'PLL', 'ZBLL'] },
   { label: 'Roux', types: ['CMLL', 'L6E'] },
 ]
 

@@ -10,6 +10,8 @@ const CONTROL_SELECTOR = [
   '[data-scramble-picker]',
   '[data-scramble-preview]',
   '[data-settings]',
+  '[data-algs]',
+  '[data-app-dock]',
   '[data-inspection]',
   '[data-times-sheet]',
   '[data-times-backdrop]',

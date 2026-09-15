@@ -26,14 +26,14 @@ export default function SettingsPage() {
   return (
     <div
       data-settings
-      className="fixed inset-0 z-40 flex items-center justify-center bg-bg/90 px-6"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-bg/70 px-6 backdrop-blur-md"
       onClick={() => navigate('/')}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-title"
-        className="w-full max-w-md rounded-2xl border border-text-muted bg-interactive p-8 text-text"
+        className="glass-panel w-full max-w-md rounded-3xl p-8 text-text"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-baseline justify-between gap-4">
@@ -66,8 +66,8 @@ export default function SettingsPage() {
                   }
                   setInputMode(mode.id)
                 }}
-                className={`w-full px-3 py-2.5 text-left text-lg ${
-                  selected ? 'bg-elevated text-accent' : 'text-text'
+                className={`w-full rounded-2xl px-3 py-2.5 text-left text-lg transition-colors ${
+                  selected ? 'bg-text/10 text-accent' : 'text-text hover:bg-text/5'
                 }`}
               >
                 {mode.label}

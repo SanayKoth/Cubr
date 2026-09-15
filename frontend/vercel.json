@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/settings", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/settings", "destination": "/index.html" },
+    { "source": "/algs", "destination": "/index.html" },
+    { "source": "/algs/:set", "destination": "/index.html" }
+  ]
 }

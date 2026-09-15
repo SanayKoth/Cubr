@@ -1,4 +1,5 @@
-[data-scramble-preview] {
+[data-scramble-preview],
+[data-alg-preview] {
   display: grid;
   filter: saturate(0.97);
 }
@@ -9,7 +10,8 @@
   Custom elements default to display:inline (0×0), so we must set grid
   here — not block — or the canvas stays empty.
 */
-[data-scramble-preview] twisty-player {
+[data-scramble-preview] twisty-player,
+[data-alg-preview] twisty-player {
   display: grid;
   width: 100%;
   height: 100%;

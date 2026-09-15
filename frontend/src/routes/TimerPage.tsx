@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { Link, Outlet, useMatch } from 'react-router-dom'
+import { Outlet, useMatch } from 'react-router-dom'
+import AppDock from '../nav/AppDock'
 import { stickeringFor } from '../scramble/catalog'
 import { useScramble } from '../scramble/useScramble'
 import { readTimerInputMode, writeTimerInputMode } from '../settings/storage'
@@ -228,6 +229,8 @@ export default function TimerPage() {
       if (event.target.closest('[data-scramble-nav]')) return
       if (event.target.closest('[data-scramble-preview]')) return
       if (event.target.closest('[data-settings]')) return
+      if (event.target.closest('[data-algs]')) return
+      if (event.target.closest('[data-app-dock]')) return
       if (event.target.closest('[data-times-sheet]')) return
       if (event.target.closest('[data-session-affordance]')) return
       if (event.target.closest('[data-times-affordance]')) return
@@ -314,36 +317,53 @@ export default function TimerPage() {
         Cubr
       </h1>
 
-      <Link
-        to="/settings"
-        aria-label="settings"
-        data-settings
-        aria-hidden={hideChrome}
-        tabIndex={hideChrome ? -1 : undefined}
-        className={`absolute top-[max(1.25rem,env(safe-area-inset-top))] right-[max(1.25rem,env(safe-area-inset-right))] z-20 flex size-12 items-center justify-center text-text outline-none md:top-5 md:right-5 ${chrome}`}
-      >
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="size-7"
-        >
-          <path
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065Z"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="3"
-            stroke="currentColor"
-            strokeWidth="1.75"
-          />
-        </svg>
-      </Link>
+      <AppDock
+        hidden={hideChrome}
+        leading={
+          active ? (
+            <button
+              type="button"
+              data-session-affordance
+              data-times-affordance
+              aria-expanded={sheetOpen}
+              aria-label={sheetOpen ? 'close session' : 'open session'}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => setSheetOpen((open) => !open)}
+              className={`glass-dock relative z-[60] flex items-center gap-2 rounded-2xl px-3 py-1.5 touch-manipulation transition-[transform,background-color,border-color] duration-150 ease-out active:scale-95 ${
+                sheetOpen ? 'border-text/20 bg-text/10' : 'active:bg-text/8'
+              }`}
+            >
+              <span className="flex min-w-0 flex-col items-start text-left">
+                <span className="text-[11px] tracking-wide text-text-muted">session</span>
+                <span className="flex items-baseline gap-1.5">
+                  <span className="max-w-[5.5rem] truncate text-sm text-text">{active.name}</span>
+                  <span className="text-sm text-text-dim timer-figures">
+                    {lastSolve
+                      ? formatSolveTime(lastSolve.timeMs, lastSolve.penalty)
+                      : '—'}
+                  </span>
+                </span>
+              </span>
+              <span
+                aria-hidden="true"
+                className={`flex size-7 shrink-0 items-center justify-center rounded-full bg-text/10 text-text-dim transition-transform duration-200 ease-out ${
+                  sheetOpen ? 'rotate-180 bg-text/15 text-text' : ''
+                }`}
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="size-4">
+                  <path
+                    d="M6 14l6-6 6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
+          ) : null
+        }
+      />
 
       {sheetOpen && (
         <div
@@ -357,9 +377,9 @@ export default function TimerPage() {
         data-times-sheet
         className={`${
           sheetOpen
-            ? 'fixed inset-x-0 bottom-0 z-30 flex max-h-[min(80vh,calc(100dvh-env(safe-area-inset-top)-2rem))] min-h-0 flex-col border-t border-border bg-bg px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] touch-auto'
+            ? 'fixed inset-x-0 bottom-0 z-30 flex max-h-[min(80vh,calc(100dvh-env(safe-area-inset-top)-2rem))] min-h-0 flex-col border-t border-border bg-bg px-6 pt-4 pb-[max(5.75rem,calc(env(safe-area-inset-bottom)+4.75rem))] touch-auto'
             : 'hidden'
-        } md:absolute md:inset-auto md:top-28 md:bottom-8 md:left-6 md:z-20 md:flex md:max-h-none md:w-56 md:flex-col md:border-0 md:bg-transparent md:p-0 md:touch-auto ${chrome}`}
+        } md:absolute md:inset-auto md:top-28 md:bottom-24 md:left-6 md:z-20 md:flex md:max-h-none md:w-56 md:flex-col md:border-0 md:bg-transparent md:p-0 md:touch-auto ${chrome}`}
       >
         {active && (
           <SessionPanel
@@ -401,31 +421,6 @@ export default function TimerPage() {
           {active && <StatsBlock solves={active.solves} />}
         </div>
       </div>
-
-      {active && (
-        <div
-          className={`absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-[max(1.25rem,env(safe-area-inset-left))] z-20 flex flex-col items-start gap-1 md:hidden ${chrome}`}
-        >
-          <button
-            type="button"
-            data-session-affordance
-            onClick={() => setSheetOpen(true)}
-            className="max-w-[10rem] truncate text-sm text-text-dim"
-          >
-            {active.name}
-          </button>
-          <button
-            type="button"
-            data-times-affordance
-            onClick={() => setSheetOpen(true)}
-            className="text-sm text-text-dim"
-          >
-            {lastSolve
-              ? formatSolveTime(lastSolve.timeMs, lastSolve.penalty)
-              : 'times'}
-          </button>
-        </div>
-      )}
 
       <header
         className={`px-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.25rem))] text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1 ${chrome}`}
@@ -532,7 +527,7 @@ export default function TimerPage() {
       </section>
 
       <div
-        className={`absolute right-[max(1.25rem,env(safe-area-inset-right))] bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-10 flex flex-col items-end gap-2 md:right-5 md:bottom-5 ${chrome}`}
+        className={`absolute bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] left-[max(1.25rem,env(safe-area-inset-left))] z-10 flex flex-col items-start gap-2 md:right-5 md:bottom-5 md:left-auto md:items-end ${chrome}`}
       >
         {preview && (
           <div className="h-20 w-20 md:h-44 md:w-44">

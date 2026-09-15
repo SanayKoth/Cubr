@@ -1,6 +1,5 @@
 export const SCRAMBLE_TYPES = [
   'WCA',
-  'Cross',
   'F2L',
   'OLL',
   'PLL',

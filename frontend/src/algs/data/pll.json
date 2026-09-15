@@ -1,0 +1,188 @@
+[
+  {
+    "id": "Aa",
+    "name": "Aa perm",
+    "group": "Adj corners",
+    "algs": [
+      "x (R' U R') D2 (R U' R') D2 R2 x'"
+    ]
+  },
+  {
+    "id": "Ab",
+    "name": "Ab perm",
+    "group": "Adj corners",
+    "algs": [
+      "x R2' D2 (R U R') D2 (R U' R) x'"
+    ]
+  },
+  {
+    "id": "E",
+    "name": "E perm",
+    "group": "Diag corners",
+    "algs": [
+      "x' (R U' R' D) (R U R' D') (R U R' D) (R U' R' D') x",
+      "R' U' R' D' R U' R' D R U R' D' R U R' D R2"
+    ]
+  },
+  {
+    "id": "F",
+    "name": "F perm",
+    "group": "Adj corners",
+    "algs": [
+      "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R"
+    ]
+  },
+  {
+    "id": "Ga",
+    "name": "Ga perm",
+    "group": "G perm",
+    "algs": [
+      "R2 U R' U R' U' R U' R2 D U' R' U R D'"
+    ]
+  },
+  {
+    "id": "Gb",
+    "name": "Gb perm",
+    "group": "G perm",
+    "algs": [
+      "R' U' R U D' R2 U R' U R U' R U' R2 D"
+    ]
+  },
+  {
+    "id": "Gc",
+    "name": "Gc perm",
+    "group": "G perm",
+    "algs": [
+      "R2 F2 R U2 R U2 R' F R U R' U' R' F R2",
+      "R2 U' R U' R U R' U R2 D' U R U' R' D"
+    ]
+  },
+  {
+    "id": "Gd",
+    "name": "Gd perm",
+    "group": "G perm",
+    "algs": [
+      "R U R' U' D R2 U' R U' R' U R' U R2 D'"
+    ]
+  },
+  {
+    "id": "H",
+    "name": "H perm",
+    "group": "Edge perm",
+    "algs": [
+      "M2 U' M2 U2 M2 U' M2"
+    ]
+  },
+  {
+    "id": "Ja",
+    "name": "Ja perm",
+    "group": "Adj corners",
+    "algs": [
+      "x R2 F R F' R U2 r' U r U2 x'",
+      "L' U' L F L' U' L U L F' L2 U L",
+      "R' U L' U2 R U' R' U2 R L",
+      "R' U2 R U R' U2 L U' R U L'"
+    ]
+  },
+  {
+    "id": "Jb",
+    "name": "Jb perm",
+    "group": "Adj corners",
+    "algs": [
+      "(R U R' F') (R U R' U') R' F R2 U' R' U'"
+    ]
+  },
+  {
+    "id": "Na",
+    "name": "Na perm",
+    "group": "Diag corners",
+    "algs": [
+      "(R U R' U) (R U R' F' R U R' U' R' F R2 U' R') (U2 R U' R')",
+      "F' R U R' U' R' F R2 F U' R' U' R U F' R'",
+      "R F U' R' U R U F' R2 F' R U R U' R' F",
+      "r' D r U2 r' D r U2 r' D r U2 r' D r U2 r' D r"
+    ]
+  },
+  {
+    "id": "Nb",
+    "name": "Nb perm",
+    "group": "Diag corners",
+    "algs": [
+      "r' D' F r U' r' F' D r2 U r' U' r' F r F'",
+      "R' U R U' R' F' U' F R U R' F R' F' R U' R",
+      "R' U L' U2 R U' L R' U L' U2 R U' L"
+    ]
+  },
+  {
+    "id": "Ra",
+    "name": "Ra perm",
+    "group": "Adj corners",
+    "algs": [
+      "(R U' R' U') R U (R D R') U' (R D' R') U2 R' U'",
+      "R U R' F' R U2 R' U2 R' F R U R U2 R'"
+    ]
+  },
+  {
+    "id": "Rb",
+    "name": "Rb perm",
+    "group": "Adj corners",
+    "algs": [
+      "(R' U2 R U2) R' F (R U R' U') R' F' R2"
+    ]
+  },
+  {
+    "id": "T",
+    "name": "T perm",
+    "group": "Adj corners",
+    "algs": [
+      "(R U R' U') R' F R2 U' R' U' (R U R' F')"
+    ]
+  },
+  {
+    "id": "Ua",
+    "name": "Ua perm",
+    "group": "Edge perm",
+    "algs": [
+      "M2 U M U2 M' U M2",
+      "R U' R U R U R U' R' U' R2",
+      "R U R' U R' U' R2 U' R' U R' U R"
+    ]
+  },
+  {
+    "id": "Ub",
+    "name": "Ub perm",
+    "group": "Edge perm",
+    "algs": [
+      "M2 U' M U2 M' U' M2",
+      "R2' U R U R' U' R3 U' R' U R'",
+      "R' U R' U' R' U' R' U R U R2"
+    ]
+  },
+  {
+    "id": "V",
+    "name": "V perm",
+    "group": "Diag corners",
+    "algs": [
+      "(R' U R' U') (R D' R' D) R' U D' R2 U' R2 D R2",
+      "R' U R' U' y R' F' R2 U' R' U R' F R F"
+    ]
+  },
+  {
+    "id": "Y",
+    "name": "Y perm",
+    "group": "Diag corners",
+    "algs": [
+      "F (R U' R' U') (R U R' F') (R U R' U') (R' F R F')",
+      "F R' F R2 U' R' U' R U R' F' R U R' U' F'"
+    ]
+  },
+  {
+    "id": "Z",
+    "name": "Z perm",
+    "group": "Edge perm",
+    "algs": [
+      "M2 U' M2 U' M' U2 M2 U2 M' U2",
+      "M' U' M2 U' M2 U' M' U2 M2"
+    ]
+  }
+]

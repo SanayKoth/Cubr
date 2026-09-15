@@ -1,6 +1,7 @@
 import { randomScrambleForEvent } from 'cubing/scramble'
 import { setSearchDebug } from 'cubing/search'
 import { coerceScrambleType } from './catalog'
+import { canonicalMoves } from './notation'
 import type { ScrambleProvider } from './provider'
 import { generateSubsetScramble } from './subsets'
 import type { Scramble, ScrambleType } from './types'
@@ -25,7 +26,7 @@ export const wcaProvider: ScrambleProvider = {
       return {
         event,
         scrambleType: 'WCA',
-        moves: alg.toString(),
+        moves: canonicalMoves(alg.toString()),
       }
     }
     return {

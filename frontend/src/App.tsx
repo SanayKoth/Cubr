@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import LibraryPage from './algs/LibraryPage'
 import SettingsPage from './settings/SettingsPage'
 import TimerPage from './routes/TimerPage'
@@ -10,11 +11,14 @@ import TimerPage from './routes/TimerPage'
 */
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<TimerPage />}>
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
-      <Route path="/algs/:set?" element={<LibraryPage />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<TimerPage />}>
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+        <Route path="/algs/:set?" element={<LibraryPage />} />
+      </Routes>
+      <Analytics />
+    </>
   )
 }

@@ -1,4 +1,5 @@
-import { Route, Routes } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import LibraryPage from './algs/LibraryPage'
 import SettingsPage from './settings/SettingsPage'
 import TimerPage from './routes/TimerPage'
@@ -9,12 +10,18 @@ import TimerPage from './routes/TimerPage'
   stays mounted. /algs is a sibling and unmounts the timer on purpose.
 */
 export default function App() {
+  const { pathname } = useLocation()
+
   return (
-    <Routes>
-      <Route path="/" element={<TimerPage />}>
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
-      <Route path="/algs/:set?" element={<LibraryPage />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<TimerPage />}>
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+        <Route path="/algs/:set?" element={<LibraryPage />} />
+      </Routes>
+      <Analytics route={pathname} path={pathname} />
+    </>
   )
 }
+

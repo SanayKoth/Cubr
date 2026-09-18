@@ -13,6 +13,7 @@ const CONTROL_SELECTOR = [
   '[data-algs]',
   '[data-app-dock]',
   '[data-inspection]',
+  '[data-cancel-inspection]',
   '[data-times-sheet]',
   '[data-times-backdrop]',
   '[data-session-affordance]',

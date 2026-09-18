@@ -234,6 +234,7 @@ export default function TimerPage() {
       if (event.target.closest('[data-times-sheet]')) return
       if (event.target.closest('[data-session-affordance]')) return
       if (event.target.closest('[data-times-affordance]')) return
+      if (event.target.closest('[data-cancel-inspection]')) return
       setSelectedId(null)
       setPanel('none')
       setSheetOpen(false)
@@ -316,6 +317,29 @@ export default function TimerPage() {
       >
         Cubr
       </h1>
+
+      {inspectLive && (
+        <button
+          type="button"
+          data-cancel-inspection
+          aria-label="cancel inspection"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={() => {
+            if (inputMode === 'gan') cancelGanInspection()
+            else cancelAndDismiss()
+          }}
+          className="absolute top-[max(1.25rem,env(safe-area-inset-top))] right-[max(1.25rem,env(safe-area-inset-right))] z-30 flex size-11 items-center justify-center text-text-dim outline-none transition-colors active:text-text md:top-5 md:right-5"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-5">
+            <path
+              d="M6 6l12 12M18 6L6 18"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      )}
 
       <AppDock
         hidden={hideChrome}

@@ -1,16 +1,20 @@
+import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { casesForSet, parseAlgSet } from './catalog'
 import CaseCard from './CaseCard'
-import { ALG_SETS } from './types'
+import { ALG_SETS, OLL_GROUPS } from './types'
 import AppDock from '../nav/AppDock'
 
 export default function LibraryPage() {
   const { set: setParam } = useParams()
+  const [ollGroup, setOllGroup] = useState<string | null>(null)
   if (setParam !== undefined && setParam !== 'pll' && setParam !== 'oll') {
-    return <Navigate to="/algs/pll" replace />
+    return <Navigate to="/algs/oll" replace />
   }
   const set = parseAlgSet(setParam)
-  const cases = casesForSet(set)
+  const cases = casesForSet(set).filter(
+    (entry) => set !== 'oll' || ollGroup === null || entry.group === ollGroup,
+  )
 
   return (
     <div data-algs-page className="flex h-full flex-col bg-bg font-sans text-text">
@@ -34,10 +38,46 @@ export default function LibraryPage() {
             </Link>
           ))}
         </nav>
+        {set === 'oll' && (
+          <nav
+            data-oll-groups
+            className="glass-dock mx-auto mt-3 w-fit max-w-[min(32rem,calc(100%-0.5rem))] rounded-full p-1"
+          >
+            <div className="flex gap-0.5 overflow-x-auto px-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <button
+                type="button"
+                data-oll-group="all"
+                onClick={() => setOllGroup(null)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs tracking-tight ${
+                  ollGroup === null
+                    ? 'bg-text/12 text-text'
+                    : 'text-text-muted hover:text-text-dim'
+                }`}
+              >
+                All
+              </button>
+              {OLL_GROUPS.map((group) => (
+                <button
+                  key={group}
+                  type="button"
+                  data-oll-group={group}
+                  onClick={() => setOllGroup(group)}
+                  className={`shrink-0 rounded-full px-3 py-1 text-xs tracking-tight ${
+                    ollGroup === group
+                      ? 'bg-text/12 text-text'
+                      : 'text-text-muted hover:text-text-dim'
+                  }`}
+                >
+                  {group}
+                </button>
+              ))}
+            </div>
+          </nav>
+        )}
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-6 pb-[max(7rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <main className="min-h-0 flex-1 overflow-y-auto px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-5 pb-[max(7rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 lg:grid-cols-2">
           {cases.map((entry) => (
             <CaseCard key={entry.id} entry={entry} set={set} />
           ))}

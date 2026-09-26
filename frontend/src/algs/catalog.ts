@@ -10,5 +10,5 @@ export function casesForSet(set: AlgSetId): AlgCase[] {
 }
 
 export function parseAlgSet(value: string | undefined): AlgSetId {
-  return value === 'oll' ? 'oll' : 'pll'
+  return value === 'pll' ? 'pll' : 'oll'
 }

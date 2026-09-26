@@ -8,6 +8,25 @@ export type AlgCase = {
 }
 
 export const ALG_SETS: { id: AlgSetId; label: string }[] = [
-  { id: 'pll', label: 'PLL' },
   { id: 'oll', label: 'OLL' },
+  { id: 'pll', label: 'PLL' },
 ]
+
+export const OLL_GROUPS = [
+  'Dot',
+  'Square',
+  'Lightning',
+  'Fish',
+  'Knight',
+  'All edges',
+  'All corners',
+  'Awkward',
+  'P',
+  'T',
+  'C',
+  'W',
+  'L',
+  'Line',
+] as const
+
+export type OllGroup = (typeof OLL_GROUPS)[number]

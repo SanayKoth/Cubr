@@ -62,7 +62,7 @@ export default function SessionPanel({
           tabIndex={-1}
           data-new-session
           onClick={openCreate}
-          className="order-2 shrink-0 text-sm text-text-muted max-md:rounded-xl max-md:px-2.5 max-md:py-2 max-md:bg-text/8 md:order-none md:mt-1 md:border md:border-border md:px-2 md:py-1"
+          className="glass-dock order-2 shrink-0 rounded-2xl px-3 py-2 text-sm text-text-muted md:order-none md:mt-1"
         >
           <span className="md:hidden">new</span>
           <span className="hidden md:inline">new session</span>
@@ -76,7 +76,7 @@ export default function SessionPanel({
           aria-haspopup="listbox"
           aria-expanded={panel === 'session'}
           onClick={() => onPanel(panel === 'session' ? 'none' : 'session')}
-          className="flex w-full cursor-pointer items-center justify-between gap-2 bg-transparent text-left text-base text-text outline-none max-md:rounded-xl max-md:bg-text/8 max-md:py-2 max-md:pr-3 max-md:pl-3 md:border md:border-border md:py-1 md:pr-2 md:pl-2"
+          className="glass-dock flex w-full cursor-pointer items-center justify-between gap-2 rounded-2xl py-2 pr-3 pl-3 text-left text-base text-text outline-none"
         >
           <span className="min-w-0 truncate">{active.name}</span>
           <span aria-hidden="true" className="text-text-muted">

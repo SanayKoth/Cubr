@@ -3,6 +3,7 @@ import { Outlet, useMatch } from 'react-router-dom'
 import AppDock from '../nav/AppDock'
 import { stickeringFor } from '../scramble/catalog'
 import { useScramble } from '../scramble/useScramble'
+import { ganTimerSupported } from '../settings/chrome'
 import { readTimerInputMode, writeTimerInputMode } from '../settings/storage'
 import type { SettingsOutletContext, TimerInputMode } from '../settings/types'
 import EventTypeBar from '../sessions/EventTypeBar'
@@ -134,6 +135,7 @@ export default function TimerPage() {
 
   const setInputMode = useCallback(
     (mode: TimerInputMode) => {
+      if (mode === 'gan' && !ganTimerSupported()) return
       if (mode !== 'gan') disconnectGan()
       writeTimerInputMode(mode)
       setInputModeState(mode)
@@ -141,7 +143,16 @@ export default function TimerPage() {
     [disconnectGan],
   )
 
+  useEffect(() => {
+    if (inputMode === 'gan' && !ganTimerSupported()) {
+      disconnectGan()
+      writeTimerInputMode('keyboard')
+      setInputModeState('keyboard')
+    }
+  }, [disconnectGan, inputMode])
+
   const connectGan = useCallback(async () => {
+    if (!ganTimerSupported()) return
     const ok = await connectGanDevice()
     if (!ok) return
     writeTimerInputMode('gan')

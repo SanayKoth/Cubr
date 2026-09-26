@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
+import { ganTimerSupported } from './chrome'
 import type { SettingsOutletContext, TimerInputMode } from './types'
 
 const MODES: { id: TimerInputMode; label: string }[] = [
@@ -53,24 +54,35 @@ export default function SettingsPage() {
         <div className="mt-3 flex flex-col gap-1">
           {MODES.map((mode) => {
             const selected = inputMode === mode.id
+            const ganLocked = mode.id === 'gan' && !ganTimerSupported()
             return (
               <button
                 type="button"
                 key={mode.id}
                 data-input-mode={mode.id}
                 data-gan-status={mode.id === 'gan' ? ganStatus : undefined}
+                disabled={ganLocked}
+                aria-disabled={ganLocked || undefined}
                 onClick={() => {
+                  if (ganLocked) return
                   if (mode.id === 'gan') {
                     void connectGan()
                     return
                   }
                   setInputMode(mode.id)
                 }}
-                className={`w-full rounded-2xl px-3 py-2.5 text-left text-lg transition-colors ${
-                  selected ? 'bg-text/10 text-accent' : 'text-text hover:bg-text/5'
+                className={`flex w-full items-baseline justify-between gap-3 rounded-2xl px-3 py-2.5 text-left text-lg transition-colors ${
+                  ganLocked
+                    ? 'cursor-default text-text-muted'
+                    : selected
+                      ? 'bg-text/10 text-accent'
+                      : 'text-text hover:bg-text/5'
                 }`}
               >
-                {mode.label}
+                <span>{mode.label}</span>
+                {ganLocked ? (
+                  <span className="text-sm text-text-muted">Chrome only</span>
+                ) : null}
               </button>
             )
           })}

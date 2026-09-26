@@ -6,6 +6,7 @@ type ScrambleTypeGroupsProps = {
   selected: ScrambleType
   onPick: (type: ScrambleType) => void
   optionAttr: 'data-type-option' | 'data-create-type'
+  layout?: 'stack' | 'wrap'
 }
 
 export default function ScrambleTypeGroups({
@@ -13,8 +14,30 @@ export default function ScrambleTypeGroups({
   selected,
   onPick,
   optionAttr,
+  layout = 'stack',
 }: ScrambleTypeGroupsProps) {
   const groups = typeGroupsForEvent(event)
+  const types = groups.flatMap((group) => group.types)
+
+  if (layout === 'wrap') {
+    return (
+      <div className="flex flex-wrap gap-x-3 gap-y-1">
+        {types.map((type) => (
+          <button
+            type="button"
+            tabIndex={-1}
+            key={type}
+            {...{ [optionAttr]: type }}
+            onClick={() => onPick(type)}
+            className={selected === type ? 'text-accent' : 'text-text-muted'}
+          >
+            {scrambleTypeLabel(type)}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col">
       {groups.map((group) => (

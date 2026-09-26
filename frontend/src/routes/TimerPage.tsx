@@ -579,13 +579,25 @@ export default function TimerPage() {
           <button
             type="button"
             tabIndex={-1}
+            role="switch"
+            aria-checked={inspectionEnabled}
             data-inspection
             onClick={toggleInspection}
-            className={`text-sm ${
-              inspectionEnabled ? 'text-accent' : 'text-text-muted'
-            }`}
+            className="flex items-center gap-2.5 text-sm text-text-muted"
           >
-            inspection: {inspectionEnabled ? 'on' : 'off'}
+            inspection
+            <span
+              aria-hidden="true"
+              className={`relative h-5 w-9 rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                inspectionEnabled ? 'bg-accent' : 'bg-text/15'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-text shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1.4,0.36,1)] motion-reduce:transition-none ${
+                  inspectionEnabled ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </span>
           </button>
         )}
       </div>

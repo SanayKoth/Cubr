@@ -169,6 +169,7 @@ export default function SessionPanel({
                 event={draftEvent}
                 selected={draftType}
                 optionAttr="data-create-type"
+                layout="wrap"
                 onPick={setDraftType}
               />
             </div>

@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import LibraryPage from './algs/LibraryPage'
+import { useUiClickSounds } from './audio/uiClick'
 import SettingsPage from './settings/SettingsPage'
 import TimerPage from './routes/TimerPage'
 
@@ -10,6 +11,7 @@ import TimerPage from './routes/TimerPage'
   stays mounted. /algs is a sibling and unmounts the timer on purpose.
 */
 export default function App() {
+  useUiClickSounds()
   const { pathname } = useLocation()
 
   return (

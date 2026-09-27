@@ -1,14 +1,7 @@
-let ctx: AudioContext | null = null
-
-function audio(): AudioContext | null {
-  if (typeof window === 'undefined') return null
-  ctx ??= new AudioContext()
-  return ctx
-}
+import { audioContext, warmAudio } from '../audio/context'
 
 export function warmInspectionSound() {
-  const next = audio()
-  if (next?.state === 'suspended') void next.resume()
+  warmAudio()
 }
 
 function tone(
@@ -36,7 +29,7 @@ function tone(
   SpeechSynthesis is too slow, too loud, and usually a novelty voice.
 */
 export function playInspectionCue(seconds: 8 | 12) {
-  const next = audio()
+  const next = audioContext()
   if (!next) return
   if (next.state === 'suspended') void next.resume()
   const t = next.currentTime

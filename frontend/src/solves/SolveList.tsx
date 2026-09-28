@@ -8,6 +8,7 @@ type SolveListProps = {
   selectedId: string | null
   personalBestMs: number | null
   onSelect: (id: string) => void
+  onDetails: (id: string) => void
   onSetPenalty: (id: string, penalty: Penalty) => void
   onDelete: (id: string) => void
 }
@@ -20,13 +21,15 @@ function isPersonalBest(solve: Solve, personalBestMs: number | null): boolean {
 
 /*
   Newest at the top (CSTimer). Numbers are 1-indexed from the oldest solve so
-  deleting renumbers without gaps. Actions stay inline — no dialog.
+  deleting renumbers without gaps. Penalty / delete stay inline; details opens
+  the keepable solve card.
 */
 export default function SolveList({
   solves,
   selectedId,
   personalBestMs,
   onSelect,
+  onDetails,
   onSetPenalty,
   onDelete,
 }: SolveListProps) {
@@ -66,6 +69,14 @@ export default function SolveList({
 
             {selected && (
               <div className="mb-2 ml-9 flex gap-4 text-xs text-text-muted">
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  data-action="details"
+                  onClick={() => onDetails(solve.id)}
+                >
+                  details
+                </button>
                 <button
                   type="button"
                   tabIndex={-1}

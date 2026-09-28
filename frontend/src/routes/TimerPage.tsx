@@ -11,6 +11,7 @@ import SessionPanel from '../sessions/SessionPanel'
 import type { SessionPanel as Panel } from '../sessions/types'
 import { useSessions } from '../sessions/useSessions'
 import { useSyncProcessor } from '../sync/useSyncProcessor'
+import SolveCard from '../solves/SolveCard'
 import SolveList from '../solves/SolveList'
 import { formatSolveTime } from '../solves/format'
 import { averageOfN, bestSingle } from '../stats/engine'
@@ -74,6 +75,7 @@ export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
   const [inputMode, setInputModeState] = useState<TimerInputMode>(readTimerInputMode)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [detailId, setDetailId] = useState<string | null>(null)
   const [panel, setPanel] = useState<Panel>('none')
   const [sheetOpen, setSheetOpen] = useState(false)
   const solveScrollRef = useRef<HTMLDivElement>(null)
@@ -246,7 +248,13 @@ export default function TimerPage() {
       if (event.target.closest('[data-session-affordance]')) return
       if (event.target.closest('[data-times-affordance]')) return
       if (event.target.closest('[data-cancel-inspection]')) return
+      if (event.target.closest('[data-solve-card]')) return
+      if (event.target.closest('[data-solve-card-overlay]')) {
+        setDetailId(null)
+        return
+      }
       setSelectedId(null)
+      setDetailId(null)
       setPanel('none')
       setSheetOpen(false)
     }
@@ -425,10 +433,12 @@ export default function TimerPage() {
             onSwitch={(id) => {
               switchTo(id)
               setSelectedId(null)
+              setDetailId(null)
             }}
             onCreate={(name, event, scrambleType) => {
               addSession(name, event, scrambleType)
               setSelectedId(null)
+              setDetailId(null)
             }}
           />
         )}
@@ -442,13 +452,16 @@ export default function TimerPage() {
                 solves={active.solves}
                 selectedId={selectedId}
                 personalBestMs={pbMs}
-                onSelect={(id) =>
+                onSelect={(id) => {
                   setSelectedId((current) => (current === id ? null : id))
-                }
+                  setDetailId(null)
+                }}
+                onDetails={setDetailId}
                 onSetPenalty={setPenalty}
                 onDelete={(id) => {
                   deleteSolve(id)
                   setSelectedId(null)
+                  setDetailId((current) => (current === id ? null : current))
                 }}
               />
             )}
@@ -601,6 +614,17 @@ export default function TimerPage() {
           </button>
         )}
       </div>
+
+      {active && detailId ? (
+        <SolveCard
+          solves={active.solves}
+          solveId={detailId}
+          event={active.event}
+          sessionName={active.name}
+          scrambleType={active.scrambleType}
+          onClose={() => setDetailId(null)}
+        />
+      ) : null}
 
       <Outlet context={outletContext} />
 

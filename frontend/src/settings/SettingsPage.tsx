@@ -10,8 +10,14 @@ const MODES: { id: TimerInputMode; label: string }[] = [
 ]
 
 export default function SettingsPage() {
-  const { inputMode, setInputMode, ganStatus, connectGan } =
-    useOutletContext<SettingsOutletContext>()
+  const {
+    inputMode,
+    setInputMode,
+    ganStatus,
+    connectGan,
+    hideTimeDuringSolve,
+    setHideTimeDuringSolve,
+  } = useOutletContext<SettingsOutletContext>()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -87,6 +93,33 @@ export default function SettingsPage() {
             )
           })}
         </div>
+
+        <p className="mt-8 text-xs uppercase tracking-wide text-text-muted">timer</p>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={hideTimeDuringSolve}
+          data-hide-time
+          onClick={() => setHideTimeDuringSolve(!hideTimeDuringSolve)}
+          className="mt-3 flex w-full items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-left text-lg text-text hover:bg-text/5"
+        >
+          hide time
+          <span
+            aria-hidden="true"
+            className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none ${
+              hideTimeDuringSolve ? 'bg-accent' : 'bg-text/15'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-text shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1.4,0.36,1)] motion-reduce:transition-none ${
+                hideTimeDuringSolve ? 'translate-x-4' : 'translate-x-0'
+              }`}
+            />
+          </span>
+        </button>
+        <p className="mt-1 px-3 text-sm text-text-muted">
+          while a solve is running, the digits stay off
+        </p>
       </div>
     </div>
   )

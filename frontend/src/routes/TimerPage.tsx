@@ -4,7 +4,12 @@ import AppDock from '../nav/AppDock'
 import { stickeringFor } from '../scramble/catalog'
 import { useScramble } from '../scramble/useScramble'
 import { ganTimerSupported } from '../settings/chrome'
-import { readTimerInputMode, writeTimerInputMode } from '../settings/storage'
+import {
+  readHideTimeDuringSolve,
+  readTimerInputMode,
+  writeHideTimeDuringSolve,
+  writeTimerInputMode,
+} from '../settings/storage'
 import type { SettingsOutletContext, TimerInputMode } from '../settings/types'
 import EventTypeBar from '../sessions/EventTypeBar'
 import SessionPanel from '../sessions/SessionPanel'
@@ -26,6 +31,7 @@ import { useTimerKeyboard } from '../timer/useTimerKeyboard'
 import { useTimerPointer } from '../timer/useTimerPointer'
 import { useInspectionAlert } from '../timer/useInspectionAlert'
 import InspectionTrack from '../timer/InspectionTrack'
+import SolvePresence from '../timer/SolvePresence'
 
 const ScramblePreview = lazy(() => import('../preview/ScramblePreview'))
 
@@ -73,6 +79,9 @@ function isLivePhase(phase: TimerPhase): boolean {
 
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
+  const [hideTimeDuringSolve, setHideTimeDuringSolveState] = useState(
+    readHideTimeDuringSolve,
+  )
   const [inputMode, setInputModeState] = useState<TimerInputMode>(readTimerInputMode)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
@@ -274,6 +283,11 @@ export default function TimerPage() {
     }
   }
 
+  const setHideTimeDuringSolve = (enabled: boolean) => {
+    writeHideTimeDuringSolve(enabled)
+    setHideTimeDuringSolveState(enabled)
+  }
+
   const regenerateAllowed = canRegenerate(phase) && !ganRunning && !ganInspecting
   const outletContext: SettingsOutletContext = {
     inputMode,
@@ -281,6 +295,8 @@ export default function TimerPage() {
     ganStatus,
     connectGan,
     disconnectGan,
+    hideTimeDuringSolve,
+    setHideTimeDuringSolve,
   }
   const [heldPreview, setHeldPreview] = useState<{
     event: string
@@ -314,6 +330,10 @@ export default function TimerPage() {
       inputMode === 'keyboard' &&
       (phase === 'holding' || phase === 'ready'))
   const hideChrome = focus || inspectLive
+  const timeHidden =
+    hideTimeDuringSolve &&
+    ((inputMode === 'keyboard' && phase === 'running') ||
+      (inputMode === 'gan' && ganRunning))
   const best = bestSingle(active?.solves ?? [])
   const pbMs = best.kind === 'numeric' ? best.ms : null
   const lastSolve = active?.solves.at(-1) ?? null
@@ -329,6 +349,8 @@ export default function TimerPage() {
       data-input-mode={inputMode}
       data-gan-status={ganStatus}
       data-timer-focus={hideChrome ? 'true' : 'false'}
+      data-hide-time={hideTimeDuringSolve ? 'on' : 'off'}
+      data-time-hidden={timeHidden ? 'true' : 'false'}
       className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block"
     >
       <h1
@@ -530,32 +552,39 @@ export default function TimerPage() {
         }`}
       >
         <div className="flex flex-col items-center">
-          <div className="relative">
+          <div className="relative flex items-center justify-center">
             {inspectLive && <InspectionTrack />}
+            {timeHidden ? <SolvePresence /> : null}
             {inputMode === 'manual' ? (
               <ManualReadout
                 paused={settingsOpen}
                 onRecord={(timeMs) => recordSolve({ timeMs, penalty: 'NONE' })}
               />
             ) : inputMode === 'gan' ? (
-              <GanReadout
-                connected={ganStatus === 'connected'}
-                running={ganRunning}
-                inspecting={ganInspecting}
-                inspectionCue={ganInspectionCue}
-                personalBest={false}
-                clickable={ganStatus === 'connected' && !ganRunning}
-                onButton={pressGanButton}
-                readoutRef={setGanReadoutRef}
-              />
+              <div
+                className={timeHidden ? 'sr-only' : undefined}
+                aria-hidden={timeHidden || undefined}
+              >
+                <GanReadout
+                  connected={ganStatus === 'connected'}
+                  running={ganRunning}
+                  inspecting={ganInspecting}
+                  inspectionCue={ganInspectionCue}
+                  personalBest={false}
+                  clickable={ganStatus === 'connected' && !ganRunning}
+                  onButton={pressGanButton}
+                  readoutRef={setGanReadoutRef}
+                />
+              </div>
             ) : (
               <div
                 ref={setReadoutRef}
                 role="timer"
                 data-phase={phase}
+                aria-hidden={timeHidden || undefined}
                 className={`relative z-10 timer-figures origin-center font-sans text-timer transition-transform duration-500 ease-out motion-reduce:transition-none ${
-                  focus ? 'scale-[1.12]' : 'scale-100'
-                } ${readoutTone(phase, inspectionCue)}`}
+                  timeHidden ? 'sr-only' : ''
+                } ${focus && !timeHidden ? 'scale-[1.12]' : 'scale-100'} ${readoutTone(phase, inspectionCue)}`}
               />
             )}
           </div>

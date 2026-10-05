@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import '@fontsource-variable/inter'
 import '@fontsource/courier-prime'
+import '@fontsource/ibm-plex-mono/400.css'
 import './index.css'
 import App from './App.tsx'
 

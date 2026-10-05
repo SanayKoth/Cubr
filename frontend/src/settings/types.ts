@@ -8,4 +8,6 @@ export type SettingsOutletContext = {
   ganStatus: GanStatus
   connectGan: () => Promise<void>
   disconnectGan: () => void
+  hideTimeDuringSolve: boolean
+  setHideTimeDuringSolve: (enabled: boolean) => void
 }

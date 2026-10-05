@@ -93,12 +93,12 @@ export default function SolveCard({
   return createPortal(
     <div
       data-solve-card-overlay
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-bg/55 px-5 py-8 backdrop-blur-md"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-bg/80 px-5 py-8 backdrop-blur-sm"
       onPointerDown={(event) => event.stopPropagation()}
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-[22rem] flex-col items-center gap-4"
+        className="flex w-full max-w-[20rem] flex-col items-center gap-4"
         onClick={(event) => event.stopPropagation()}
       >
         <SolveCardFace

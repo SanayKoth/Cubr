@@ -19,3 +19,21 @@ export function writeTimerInputMode(mode: TimerInputMode) {
     // private mode / blocked storage — choice still works for this session
   }
 }
+
+const HIDE_TIME_KEY = 'cubr.hideTime'
+
+export function readHideTimeDuringSolve(): boolean {
+  try {
+    return window.localStorage.getItem(HIDE_TIME_KEY) === 'on'
+  } catch {
+    return false
+  }
+}
+
+export function writeHideTimeDuringSolve(enabled: boolean) {
+  try {
+    window.localStorage.setItem(HIDE_TIME_KEY, enabled ? 'on' : 'off')
+  } catch {
+    // private mode / blocked storage — toggle still works for this session
+  }
+}

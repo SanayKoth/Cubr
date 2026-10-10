@@ -20,9 +20,10 @@ function isLiveRequest(
 }
 
 /*
-  Two live slots (current + prefetched next) plus one unused previous.
-  Skip stashes the shown scramble; back restores it. A second skip replaces
-  that stash — only one scramble back, never a history.
+  Two live slots (current + prefetched next) plus one previous.
+  Skip and consume (a finished solve) stash the shown scramble; back restores
+  it. The next skip or solve replaces that stash — only one scramble back,
+  never a history (CSTimer).
   loaded is stale unless both event and scrambleType match the request.
 */
 export function useScramble(
@@ -119,19 +120,19 @@ export function useScramble(
     return shown
   }, [prefetch])
 
-  const consume = useCallback((): Scramble | null => {
-    previousRef.current = null
-    setPrevious(null)
+  const stashAndPromote = useCallback((): Scramble | null => {
+    const shown = currentRef.current
+    previousRef.current = shown
+    setPrevious(shown)
     return promote()
   }, [promote])
 
+  const consume = useCallback((): Scramble | null => stashAndPromote(), [stashAndPromote])
+
   const skip = useCallback(() => {
-    const shown = currentRef.current
-    if (!shown) return
-    previousRef.current = shown
-    setPrevious(shown)
-    promote()
-  }, [promote])
+    if (!currentRef.current) return
+    stashAndPromote()
+  }, [stashAndPromote])
 
   const back = useCallback(() => {
     const stored = previousRef.current

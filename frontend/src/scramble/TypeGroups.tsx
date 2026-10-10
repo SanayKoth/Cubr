@@ -21,7 +21,7 @@ export default function ScrambleTypeGroups({
 
   if (layout === 'wrap') {
     return (
-      <div className="flex flex-wrap gap-x-3 gap-y-1">
+      <div className="flex flex-wrap gap-1">
         {types.map((type) => (
           <button
             type="button"
@@ -29,7 +29,11 @@ export default function ScrambleTypeGroups({
             key={type}
             {...{ [optionAttr]: type }}
             onClick={() => onPick(type)}
-            className={selected === type ? 'text-accent' : 'text-text-muted'}
+            className={`rounded-full px-3 py-1 text-sm transition-colors ${
+              selected === type
+                ? 'bg-text/10 text-accent'
+                : 'text-text-muted [@media(hover:hover)]:hover:bg-text/5 [@media(hover:hover)]:hover:text-text'
+            }`}
           >
             {scrambleTypeLabel(type)}
           </button>

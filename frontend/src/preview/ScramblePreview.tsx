@@ -59,6 +59,19 @@ export default function ScramblePreview({ event, moves, stickering }: ScramblePr
     player.experimentalSetupAlg = moves
   }, [event, moves, stickering])
 
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+    const observer = new ResizeObserver(() => {
+      const player = playerRef.current
+      if (!player) return
+      player.style.width = '100%'
+      player.style.height = '100%'
+    })
+    observer.observe(host)
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <div
       ref={hostRef}

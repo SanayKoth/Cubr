@@ -44,7 +44,7 @@ export default function SolveList({
         const selected = solve.id === selectedId
         const pb = isPersonalBest(solve, personalBestMs)
         return (
-          <li key={solve.id}>
+          <li key={solve.id} data-selected={selected ? 'true' : 'false'} className="group/solve">
             <button
               type="button"
               tabIndex={-1}
@@ -55,8 +55,8 @@ export default function SolveList({
               data-pb={pb ? 'true' : 'false'}
               data-selected={selected ? 'true' : 'false'}
               onClick={() => onSelect(solve.id)}
-              className={`flex w-full items-baseline gap-3 py-1 text-left ${
-                selected ? 'text-text' : 'text-text-dim'
+              className={`flex w-full items-baseline gap-3 py-1 text-left transition-colors duration-200 ${
+                selected ? 'text-text' : 'text-text-dim [@media(hover:hover)]:group-hover/solve:text-text'
               }`}
             >
               <span className="w-6 shrink-0 text-right text-text-muted timer-figures">
@@ -67,8 +67,9 @@ export default function SolveList({
               </span>
             </button>
 
-            {selected && (
-              <div className="mb-2 ml-9 flex gap-4 text-xs text-text-muted">
+            <div data-solve-actions className="solve-actions grid">
+              <div className="overflow-hidden">
+              <div className="solve-actions-row mb-2 ml-9 flex origin-left gap-4 text-xs text-text-muted">
                 <button
                   type="button"
                   tabIndex={-1}
@@ -114,7 +115,8 @@ export default function SolveList({
                   delete
                 </button>
               </div>
-            )}
+              </div>
+            </div>
           </li>
         )
       })}

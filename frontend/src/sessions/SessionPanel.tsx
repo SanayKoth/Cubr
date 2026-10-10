@@ -62,7 +62,7 @@ export default function SessionPanel({
           tabIndex={-1}
           data-new-session
           onClick={openCreate}
-          className="glass-dock order-2 shrink-0 rounded-2xl px-3 py-2 text-sm text-text-muted md:order-none md:mt-1"
+          className="glass-dock order-2 shrink-0 rounded-2xl px-3 py-2 text-sm text-text-muted md:order-none md:mt-1 [@media(hover:hover)]:hover:bg-text/10 [@media(hover:hover)]:hover:text-text"
         >
           <span className="md:hidden">new</span>
           <span className="hidden md:inline">new session</span>
@@ -87,7 +87,7 @@ export default function SessionPanel({
           <ul
             role="listbox"
             aria-label="session"
-            className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto overscroll-contain border border-border bg-elevated py-1 max-md:rounded-xl"
+            className="absolute z-10 mt-1 flex max-h-48 w-full flex-col gap-0.5 overflow-y-auto overscroll-contain rounded-2xl border border-text/10 bg-bg/90 p-1 backdrop-blur-xl"
           >
             {listed.map((session) => {
               const selected = session.id === active.id
@@ -103,8 +103,10 @@ export default function SessionPanel({
                       onSwitch(session.id)
                       onPanel('none')
                     }}
-                    className={`w-full truncate px-2 py-1.5 text-left text-base ${
-                      selected ? 'text-accent' : 'text-text-muted'
+                    className={`w-full truncate rounded-xl px-3 py-2 text-left text-base transition-colors ${
+                      selected
+                        ? 'bg-text/10 text-accent'
+                        : 'text-text-muted [@media(hover:hover)]:hover:bg-text/5 [@media(hover:hover)]:hover:text-text'
                     }`}
                   >
                     {session.name}
@@ -121,13 +123,13 @@ export default function SessionPanel({
         createPortal(
           <div
             data-session-create
-            className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-bg/25 px-6 backdrop-blur-sm"
             onPointerDown={(event) => {
               if (event.target === event.currentTarget) onPanel('none')
             }}
           >
             <div
-              className="w-full max-w-md bg-elevated p-6 text-left"
+              className="w-full max-w-md rounded-3xl border border-text/10 bg-bg/40 p-8 text-left backdrop-blur-xl"
               onPointerDown={(event) => event.stopPropagation()}
             >
             <p className="text-xs uppercase tracking-wide text-text-muted">new session</p>
@@ -144,11 +146,11 @@ export default function SessionPanel({
                 setNameTouched(true)
                 setDraftName(event.target.value)
               }}
-              className="mt-1 w-full border-b border-border bg-transparent pb-1 text-text outline-none"
+              className="mt-1 w-full rounded-2xl border border-text/10 bg-text/5 px-3 py-2 text-text outline-none transition-colors focus:border-text/25"
             />
 
             <p className="mt-5 text-xs text-text-muted">event</p>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+            <div className="mt-2 flex flex-wrap gap-1 text-sm">
               {WCA_EVENTS.map((entry) => (
                 <button
                   type="button"
@@ -156,7 +158,11 @@ export default function SessionPanel({
                   key={entry.id}
                   data-create-event={entry.id}
                   onClick={() => pickEvent(entry.id)}
-                  className={draftEvent === entry.id ? 'text-accent' : 'text-text-muted'}
+                  className={`rounded-full px-3 py-1 text-sm transition-colors ${
+                    draftEvent === entry.id
+                      ? 'bg-text/10 text-accent'
+                      : 'text-text-muted [@media(hover:hover)]:hover:bg-text/5 [@media(hover:hover)]:hover:text-text'
+                  }`}
                 >
                   {entry.label}
                 </button>
@@ -174,13 +180,13 @@ export default function SessionPanel({
               />
             </div>
 
-            <div className="mt-6 flex gap-4 text-sm">
+            <div className="mt-6 flex items-center gap-4 text-sm">
               <button
                 type="button"
                 tabIndex={-1}
                 data-create-confirm
                 onClick={confirmCreate}
-                className="text-text"
+                className="glass-dock rounded-full px-4 py-2 text-sm text-text transition-colors [@media(hover:hover)]:hover:bg-text/10"
               >
                 create
               </button>
@@ -188,7 +194,7 @@ export default function SessionPanel({
                 type="button"
                 tabIndex={-1}
                 onClick={() => onPanel('none')}
-                className="text-text-muted"
+                className="text-sm text-text-muted transition-colors [@media(hover:hover)]:hover:text-text-dim"
               >
                 cancel
               </button>

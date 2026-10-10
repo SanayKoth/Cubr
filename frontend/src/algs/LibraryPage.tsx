@@ -1,23 +1,79 @@
-import { useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { casesForSet, parseAlgSet } from './catalog'
 import CaseCard from './CaseCard'
 import { ALG_SETS, OLL_GROUPS } from './types'
+import { useHorizontalPageSwipe } from './useHorizontalPageSwipe'
 import AppDock from '../nav/AppDock'
+import { rememberAlgsPath, useEdgeSwipe } from '../nav/useEdgeSwipe'
+import { useTrackpadSwipe } from '../nav/useTrackpadSwipe'
+import { slideNavigate, TIMER_PAGE } from '../nav/slideNavigate'
+
+const OLL_PAGES: readonly (string | null)[] = [null, ...OLL_GROUPS]
 
 export default function LibraryPage() {
   const { set: setParam } = useParams()
+  const navigate = useNavigate()
+  const listRef = useRef<HTMLElement>(null)
+  const pageRef = useRef<HTMLDivElement>(null)
   const [ollGroup, setOllGroup] = useState<string | null>(null)
-  if (setParam !== undefined && setParam !== 'pll' && setParam !== 'oll') {
-    return <Navigate to="/algs/oll" replace />
-  }
+  const invalidSet =
+    setParam !== undefined && setParam !== 'pll' && setParam !== 'oll'
   const set = parseAlgSet(setParam)
   const cases = casesForSet(set).filter(
     (entry) => set !== 'oll' || ollGroup === null || entry.group === ollGroup,
   )
 
+  useEffect(() => {
+    if (invalidSet) return
+    rememberAlgsPath(`/algs/${set}`)
+  }, [invalidSet, set])
+
+  const goToTimer = useCallback(() => {
+    slideNavigate(() => navigate('/'), 'right', TIMER_PAGE)
+  }, [navigate])
+
+  useEdgeSwipe({
+    enabled: !invalidSet,
+    onSwipeRight: goToTimer,
+  })
+
+  useTrackpadSwipe(pageRef, {
+    enabled: !invalidSet,
+    onSwipeRight: goToTimer,
+  })
+
+  const stepOllGroup = useCallback((delta: number) => {
+    setOllGroup((current) => {
+      const index = OLL_PAGES.indexOf(current)
+      const next = index + delta
+      if (next < 0 || next >= OLL_PAGES.length) return current
+      return OLL_PAGES[next] ?? null
+    })
+  }, [])
+
+  useHorizontalPageSwipe(listRef, {
+    enabled: !invalidSet && set === 'oll',
+    onPrev: () => stepOllGroup(-1),
+    onNext: () => stepOllGroup(1),
+  })
+
+  if (invalidSet) {
+    return <Navigate to="/algs/oll" replace />
+  }
+
   return (
-    <div data-algs-page className="flex h-full flex-col bg-bg font-sans text-text">
+    <div ref={pageRef} data-algs-page className="flex h-full flex-col bg-bg font-sans text-text">
+      <div
+        data-edge-swipe
+        aria-hidden
+        className="fixed inset-y-0 left-0 z-10 w-6 md:hidden"
+      />
+      <div
+        data-edge-swipe
+        aria-hidden
+        className="fixed inset-y-0 right-0 z-10 w-6 md:hidden"
+      />
       <header className="shrink-0 px-[max(1.5rem,env(safe-area-inset-left))] pt-[max(1.25rem,env(safe-area-inset-top))] pr-[max(1.5rem,env(safe-area-inset-right))]">
         <Link to="/" className="font-brand text-xl text-text md:text-3xl">
           Cubr
@@ -76,7 +132,10 @@ export default function LibraryPage() {
         )}
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-5 pb-[max(7rem,calc(env(safe-area-inset-bottom)+5.5rem))]">
+      <main
+        ref={listRef}
+        className="min-h-0 flex-1 overflow-y-auto px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-5 pb-[max(7rem,calc(env(safe-area-inset-bottom)+5.5rem))]"
+      >
         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 lg:grid-cols-2">
           {cases.map((entry) => (
             <CaseCard key={entry.id} entry={entry} set={set} />

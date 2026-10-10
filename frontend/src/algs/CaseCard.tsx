@@ -15,18 +15,18 @@ export default function CaseCard({ entry, set }: CaseCardProps) {
   return (
     <article
       data-alg-case={entry.id}
-      className="glass-panel flex min-h-[5.75rem] items-center gap-4 rounded-[1.75rem] px-4 py-3.5"
+      className="glass-dock flex min-h-24 items-center gap-4 rounded-[1.75rem] px-4 py-3.5"
     >
       <div className="size-[4.75rem] shrink-0">
         <LastLayerDiagram alg={shown} set={set} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="truncate text-sm text-text">
+          <h2 className="truncate text-xs text-text-dim">
             {set === 'oll' ? (
               <>
-                <span className="text-text-muted">{entry.id}</span>
-                <span className="px-1.5 text-text-muted">·</span>
+                <span>{entry.id}</span>
+                <span className="px-1.5">·</span>
                 {entry.name}
               </>
             ) : (
@@ -57,7 +57,7 @@ export default function CaseCard({ entry, set }: CaseCardProps) {
             </div>
           )}
         </div>
-        <p className="mt-1.5 line-clamp-2 font-brand text-[13px] leading-snug text-accent">
+        <p className="mt-1.5 line-clamp-2 font-brand text-base leading-snug text-accent">
           {displayAlg(shown)}
         </p>
       </div>

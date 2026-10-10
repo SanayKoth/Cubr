@@ -50,7 +50,7 @@
   --text-xl:    1.5rem;
   --text-2xl:   2rem;
   --text-3xl:   3.25rem;
-  --text-timer: 7rem;
+  --text-timer: 5rem;
 
   /* Spacing base — Tailwind derives the numeric spacing scale from this */
   --spacing: 0.25rem;
@@ -105,6 +105,165 @@
   animation-fill-mode: both;
 }
 
+@keyframes page-out-left {
+  to {
+    transform: translateX(-24%);
+    opacity: 0;
+  }
+}
+
+@keyframes page-in-from-right {
+  from {
+    transform: translateX(24%);
+    opacity: 0;
+  }
+}
+
+@keyframes page-out-right {
+  to {
+    transform: translateX(24%);
+    opacity: 0;
+  }
+}
+
+@keyframes page-in-from-left {
+  from {
+    transform: translateX(-24%);
+    opacity: 0;
+  }
+}
+
+html[data-page-slide]::view-transition-old(root),
+html[data-page-slide]::view-transition-new(root) {
+  animation-duration: 340ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+html[data-page-slide="left"]::view-transition-old(root) {
+  animation-name: page-out-left;
+}
+
+html[data-page-slide="left"]::view-transition-new(root) {
+  animation-name: page-in-from-right;
+}
+
+html[data-page-slide="right"]::view-transition-old(root) {
+  animation-name: page-out-right;
+}
+
+html[data-page-slide="right"]::view-transition-new(root) {
+  animation-name: page-in-from-left;
+}
+
+@keyframes scramble-warp {
+  0% {
+    transform: none;
+  }
+  35% {
+    transform: scale(1.025, 0.96) skewX(-2deg);
+  }
+  65% {
+    transform: scale(0.995, 1.015) skewX(0.75deg);
+  }
+  100% {
+    transform: scale(1.012);
+  }
+}
+
+@keyframes scramble-pop {
+  0% {
+    transform: scale(1.012);
+  }
+  30% {
+    transform: scale(0.965, 1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .group\/scramble:hover [data-scramble] {
+    animation: scramble-warp 0.5s cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+  }
+
+  [data-scramble][data-copied="true"],
+  .group\/scramble:hover [data-scramble][data-copied="true"] {
+    animation: scramble-pop 0.4s cubic-bezier(0.22, 1.2, 0.36, 1);
+  }
+}
+
+@keyframes solve-actions-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.94, 1.06) skewX(-4deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02, 0.98) skewX(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+  Solve row actions: open when selected (tap), or on hover after a short
+  intent delay so sweeping the cursor down the list doesn't flap every row.
+*/
+.solve-actions {
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 220ms;
+}
+
+.solve-actions-row {
+  opacity: 0;
+}
+
+[data-selected="true"] > .solve-actions {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-selected="true"] > .solve-actions .solve-actions-row {
+  opacity: 1;
+  animation: solve-actions-in 0.4s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+@media (hover: hover) {
+  .group\/solve:hover > .solve-actions {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+      grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1) 140ms,
+      visibility 0s linear 140ms;
+  }
+
+  .group\/solve:hover > .solve-actions .solve-actions-row {
+    opacity: 1;
+    animation: solve-actions-in 0.4s cubic-bezier(0.22, 1.2, 0.36, 1) 140ms both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .solve-actions,
+  [data-selected="true"] > .solve-actions,
+  .group\/solve:hover > .solve-actions {
+    transition: none;
+  }
+
+  .solve-actions-row,
+  .group\/solve:hover > .solve-actions .solve-actions-row {
+    animation: none !important;
+  }
+}
+
 /*
   Reserve tabular figures for the timer readout NOW so it is not forgotten in
   Step 2. Without tabular-nums, digit widths change as they count and the
@@ -149,11 +308,20 @@
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-text) 8%, transparent);
 }
 
+[data-side-tile] {
+  border-width: 2px;
+}
+
 @layer base {
   html,
   body,
   #root {
     height: 100%;
+  }
+
+  html,
+  body {
+    overscroll-behavior-x: none;
   }
 
   body {
@@ -162,6 +330,20 @@
     color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --text-timer: 7rem;
+    }
+  }
+
+  @media (max-width: 767px) {
+    [data-app-dock] ul,
+    [data-session-affordance],
+    [data-times-sheet] {
+      border-color: color-mix(in srgb, var(--color-text) 20%, transparent) !important;
+    }
   }
 }
 

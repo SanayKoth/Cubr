@@ -1,6 +1,9 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { Outlet, useMatch } from 'react-router-dom'
+import { Outlet, useMatch, useNavigate } from 'react-router-dom'
 import AppDock from '../nav/AppDock'
+import { lastAlgsPath, useEdgeSwipe } from '../nav/useEdgeSwipe'
+import { useTrackpadSwipe } from '../nav/useTrackpadSwipe'
+import { ALGS_PAGE, slideNavigate } from '../nav/slideNavigate'
 import { stickeringFor } from '../scramble/catalog'
 import { useScramble } from '../scramble/useScramble'
 import { ganTimerSupported } from '../settings/chrome'
@@ -87,7 +90,13 @@ export default function TimerPage() {
   const [detailId, setDetailId] = useState<string | null>(null)
   const [panel, setPanel] = useState<Panel>('none')
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [previewExpanded, setPreviewExpanded] = useState(false)
+  const copyTimerRef = useRef<number>(0)
+  const lastScrambleTapRef = useRef(0)
   const solveScrollRef = useRef<HTMLDivElement>(null)
+  const pageRef = useRef<HTMLElement>(null)
+  const navigate = useNavigate()
   const settingsOpen = Boolean(useMatch('/settings'))
   const {
     ready,
@@ -246,10 +255,14 @@ export default function TimerPage() {
       if (event.target.closest('[data-solve-list]')) return
       if (event.target.closest('[data-session-ui]')) return
       if (event.target.closest('[data-session-create]')) return
+      if (event.target.closest('[data-scramble]')) return
       if (event.target.closest('[data-scramble-meta]')) return
       if (event.target.closest('[data-scramble-picker]')) return
       if (event.target.closest('[data-scramble-nav]')) return
       if (event.target.closest('[data-scramble-preview]')) return
+      if (event.target.closest('[data-preview-overlay]')) return
+      if (event.target.closest('[data-brand]')) return
+      if (event.target.closest('[data-edge-swipe]')) return
       if (event.target.closest('[data-settings]')) return
       if (event.target.closest('[data-algs]')) return
       if (event.target.closest('[data-app-dock]')) return
@@ -270,6 +283,86 @@ export default function TimerPage() {
     document.addEventListener('pointerdown', onPointerDown)
     return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [])
+
+  const copyScramble = useCallback(async () => {
+    const moves = scramble?.moves
+    if (!moves) return
+    try {
+      if (!navigator.clipboard?.writeText) return
+      await navigator.clipboard.writeText(moves)
+    } catch {
+      return
+    }
+    setCopied(true)
+    window.clearTimeout(copyTimerRef.current)
+    copyTimerRef.current = window.setTimeout(() => setCopied(false), 1200)
+  }, [scramble?.moves])
+
+  useEffect(() => {
+    return () => window.clearTimeout(copyTimerRef.current)
+  }, [])
+
+  useEffect(() => {
+    const hidden =
+      ganRunning ||
+      ganInspecting ||
+      phase === 'running' ||
+      phase === 'inspecting' ||
+      (inspectionEnabled &&
+        inputMode === 'keyboard' &&
+        (phase === 'holding' || phase === 'ready'))
+    if (hidden) setPreviewExpanded(false)
+  }, [ganInspecting, ganRunning, inputMode, inspectionEnabled, phase])
+
+  useEffect(() => {
+    if (settingsOpen) setPreviewExpanded(false)
+  }, [settingsOpen])
+
+  useEffect(() => {
+    if (!previewExpanded) return
+    const desktop = window.matchMedia('(min-width: 768px)')
+    const close = () => {
+      if (desktop.matches) setPreviewExpanded(false)
+    }
+    close()
+    desktop.addEventListener('change', close)
+    return () => desktop.removeEventListener('change', close)
+  }, [previewExpanded])
+
+  useEffect(() => {
+    if (!previewExpanded) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setPreviewExpanded(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [previewExpanded])
+
+  const pagerEnabled =
+    !settingsOpen &&
+    !sheetOpen &&
+    panel !== 'create' &&
+    !detailId &&
+    !previewExpanded &&
+    !ganRunning &&
+    !ganInspecting &&
+    !isLivePhase(phase)
+
+  const goToAlgs = useCallback(() => {
+    slideNavigate(() => navigate(lastAlgsPath()), 'left', ALGS_PAGE)
+  }, [navigate])
+
+  useEdgeSwipe({
+    enabled: pagerEnabled,
+    onSwipeLeft: goToAlgs,
+  })
+
+  useTrackpadSwipe(pageRef, {
+    enabled: pagerEnabled,
+    onSwipeLeft: goToAlgs,
+  })
 
   const toggleInspection = () => {
     const next = !inspectionEnabled
@@ -338,12 +431,14 @@ export default function TimerPage() {
   const pbMs = best.kind === 'numeric' ? best.ms : null
   const lastSolve = active?.solves.at(-1) ?? null
   const ao5 = averageOfN(active?.solves ?? [], 5)
+  const ao12 = averageOfN(active?.solves ?? [], 12)
   const chrome = hideChrome
     ? 'pointer-events-none opacity-0 transition-opacity duration-500 ease-out'
     : 'opacity-100 transition-opacity duration-500 ease-out'
 
   return (
     <main
+      ref={pageRef}
       data-ready={ready ? 'true' : 'false'}
       data-pre-ready-flushed={String(preReadyFlushed)}
       data-input-mode={inputMode}
@@ -353,11 +448,34 @@ export default function TimerPage() {
       data-time-hidden={timeHidden ? 'true' : 'false'}
       className="relative flex h-full flex-col bg-bg font-sans text-text select-none md:block"
     >
-      <h1
-        className={`absolute top-[max(1.5rem,env(safe-area-inset-top))] left-[max(1.5rem,env(safe-area-inset-left))] z-20 font-brand text-xl text-text md:top-6 md:left-6 md:text-3xl ${chrome}`}
-      >
-        Cubr
-      </h1>
+      {regenerateAllowed ? (
+        <button
+          type="button"
+          data-brand
+          aria-label="next scramble"
+          onClick={() => skip()}
+          className={`absolute top-[max(1.5rem,env(safe-area-inset-top))] left-[max(1.5rem,env(safe-area-inset-left))] z-20 font-brand text-xl text-text md:top-6 md:left-6 md:text-3xl ${chrome}`}
+        >
+          Cubr
+        </button>
+      ) : (
+        <h1
+          className={`absolute top-[max(1.5rem,env(safe-area-inset-top))] left-[max(1.5rem,env(safe-area-inset-left))] z-20 font-brand text-xl text-text md:top-6 md:left-6 md:text-3xl ${chrome}`}
+        >
+          Cubr
+        </h1>
+      )}
+
+      <div
+        data-edge-swipe
+        aria-hidden
+        className="fixed inset-y-0 left-0 z-10 w-6 md:hidden"
+      />
+      <div
+        data-edge-swipe
+        aria-hidden
+        className="fixed inset-y-0 right-0 z-10 w-6 md:hidden"
+      />
 
       {inspectLive && (
         <button
@@ -394,14 +512,14 @@ export default function TimerPage() {
               aria-label={sheetOpen ? 'close session' : 'open session'}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => setSheetOpen((open) => !open)}
-              className={`glass-dock relative z-[60] flex items-center gap-2 rounded-2xl px-3 py-1.5 touch-manipulation transition-[transform,background-color,border-color] duration-150 ease-out active:scale-95 ${
+              className={`glass-dock relative z-[60] flex w-full items-center justify-between gap-2 rounded-2xl px-3 py-1.5 touch-manipulation transition-[transform,background-color,border-color] duration-150 ease-out active:scale-95 max-md:border-text/20 ${
                 sheetOpen ? 'border-text/20 bg-text/10' : 'active:bg-text/8'
               }`}
             >
               <span className="flex min-w-0 flex-col items-start text-left">
                 <span className="text-[11px] tracking-wide text-text-muted">session</span>
                 <span className="flex items-baseline gap-1.5">
-                  <span className="max-w-[5.5rem] truncate text-sm text-text">{active.name}</span>
+                  <span className="max-w-[8rem] truncate text-sm text-text">{active.name}</span>
                   <span className="text-sm text-text-dim timer-figures">
                     {lastSolve
                       ? formatSolveTime(lastSolve.timeMs, lastSolve.penalty)
@@ -439,10 +557,16 @@ export default function TimerPage() {
       )}
 
       <div
+        aria-hidden="true"
+        data-side-tile
+        className={`pointer-events-none absolute hidden md:top-24 md:bottom-3 md:left-3 md:block md:w-62 md:rounded-3xl md:glass-dock ${chrome}`}
+      />
+
+      <div
         data-times-sheet
         className={`${
           sheetOpen
-            ? 'fixed z-30 flex min-h-0 flex-col touch-auto max-md:inset-x-[max(1rem,env(safe-area-inset-left))] max-md:right-[max(1rem,env(safe-area-inset-right))] max-md:bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] max-md:max-h-[min(62vh,calc(100dvh-8.5rem))] max-md:overflow-hidden max-md:rounded-3xl max-md:px-4 max-md:pt-3 max-md:pb-3 max-md:glass-dock'
+            ? 'fixed z-30 flex min-h-0 flex-col touch-auto max-md:inset-x-[max(1rem,env(safe-area-inset-left))] max-md:right-[max(1rem,env(safe-area-inset-right))] max-md:bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] max-md:max-h-[min(62vh,calc(100dvh-8.5rem))] max-md:overflow-hidden max-md:rounded-3xl max-md:px-4 max-md:pt-3 max-md:pb-3 max-md:glass-dock max-md:border-text/20'
             : 'hidden'
         } md:absolute md:inset-auto md:top-28 md:bottom-60 md:left-6 md:z-20 md:flex md:max-h-none md:w-56 md:flex-col md:overflow-visible md:rounded-none md:border-0 md:bg-transparent md:p-0 md:touch-auto ${chrome}`}
       >
@@ -495,54 +619,83 @@ export default function TimerPage() {
       <header
         className={`px-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.25rem))] text-center md:absolute md:inset-x-0 md:top-6 md:z-10 md:px-56 md:pt-1 ${chrome}`}
       >
-        <button
-          type="button"
-          title="next scramble"
-          aria-label="next scramble"
-          disabled={!regenerateAllowed}
-          onClick={() => {
-            if (regenerateAllowed) skip()
-          }}
+        <div className="group/scramble relative inline-block max-w-5xl">
+        <p
+          aria-live="polite"
+          className={`pointer-events-none absolute -top-6 left-1/2 hidden -translate-x-1/2 whitespace-nowrap text-xs tracking-wide transition-opacity duration-200 [@media(hover:hover)]:block ${
+            copied
+              ? 'text-text-dim opacity-100'
+              : 'text-text-muted opacity-0 group-hover/scramble:opacity-100'
+          }`}
+        >
+          {copied ? 'scramble copied!' : 'double-click to copy'}
+        </p>
+        <div
           data-scramble={scramble ? 'ready' : 'pending'}
-          className="max-w-5xl text-center text-xl leading-snug text-text-dim select-text disabled:cursor-default md:text-2xl"
+          data-copied={copied ? 'true' : undefined}
+          onDoubleClick={(event) => {
+            event.preventDefault()
+            void copyScramble()
+          }}
+          onPointerUp={(event) => {
+            if (!event.isPrimary || event.pointerType === 'mouse') return
+            const now = event.timeStamp
+            if (now - lastScrambleTapRef.current < 320) {
+              lastScrambleTapRef.current = 0
+              void copyScramble()
+            } else {
+              lastScrambleTapRef.current = now
+            }
+          }}
+          className="origin-center text-center text-xl leading-snug text-text-dim select-text transition-colors duration-200 md:text-2xl [@media(hover:hover)]:cursor-copy [@media(hover:hover)]:group-hover/scramble:text-text"
         >
           {scramble ? scramble.moves : 'generating…'}
-        </button>
+        </div>
+        </div>
         <div
           data-scramble-nav
           className="mt-2 flex items-center justify-center gap-6 text-sm"
         >
-          <button
-            type="button"
-            data-scramble-back
-            disabled={!regenerateAllowed || !canGoBack}
-            onClick={() => {
-              if (regenerateAllowed) back()
-            }}
-            className="inline-flex min-h-11 min-w-14 items-center justify-center px-3 text-text-dim disabled:text-text-muted disabled:cursor-default"
+          {copied ? (
+            <p className="hidden min-h-11 items-center text-sm text-text-muted [@media(hover:none)]:flex">
+              scramble copied!
+            </p>
+          ) : null}
+          <div
+            className={`contents ${copied ? '[@media(hover:none)]:hidden' : ''}`}
           >
-            last
-          </button>
-          {active && (
-            <EventTypeBar
-              active={active}
-              panel={panel}
-              onPanel={setPanel}
-              onChangeEvent={setEvent}
-              onChangeType={setScrambleType}
-            />
-          )}
-          <button
-            type="button"
-            data-scramble-next
-            disabled={!regenerateAllowed}
-            onClick={() => {
-              if (regenerateAllowed) skip()
-            }}
-            className="inline-flex min-h-11 min-w-14 items-center justify-center px-3 text-text-dim disabled:text-text-muted disabled:cursor-default"
-          >
-            next
-          </button>
+              <button
+                type="button"
+                data-scramble-back
+                disabled={!regenerateAllowed || !canGoBack}
+                onClick={() => {
+                  if (regenerateAllowed) back()
+                }}
+                className="inline-flex min-h-11 min-w-14 items-center justify-center px-3 text-text-dim disabled:text-text-muted disabled:cursor-default"
+              >
+                last
+              </button>
+              {active && (
+                <EventTypeBar
+                  active={active}
+                  panel={panel}
+                  onPanel={setPanel}
+                  onChangeEvent={setEvent}
+                  onChangeType={setScrambleType}
+                />
+              )}
+              <button
+                type="button"
+                data-scramble-next
+                disabled={!regenerateAllowed}
+                onClick={() => {
+                  if (regenerateAllowed) skip()
+                }}
+                className="inline-flex min-h-11 min-w-14 items-center justify-center px-3 text-text-dim disabled:text-text-muted disabled:cursor-default"
+              >
+                next
+              </button>
+          </div>
         </div>
       </header>
 
@@ -588,34 +741,98 @@ export default function TimerPage() {
               />
             )}
           </div>
-          <p
-            data-ao5
-            className={`mt-3 text-base ${chrome}`}
-          >
-            <span className="text-text-muted">ao5</span>
-            <span
-              data-stat="ao5-glance"
-              className="ml-2 font-sans text-text-dim timer-figures"
-            >
-              {formatStat(ao5)}
-            </span>
-          </p>
+          <div className={`mt-3 ${chrome}`}>
+            <p data-ao5 className="text-base">
+              <span className="text-text-muted">ao5</span>
+              <span
+                data-stat="ao5-glance"
+                className="ml-2 font-sans text-text-dim timer-figures"
+              >
+                {formatStat(ao5)}
+              </span>
+            </p>
+            <p data-ao12 className="mt-1 text-base md:mt-0.5 md:text-sm">
+              <span className="text-text-muted">ao12</span>
+              <span
+                data-stat="ao12-glance"
+                className="ml-2 font-sans text-text-dim timer-figures"
+              >
+                {formatStat(ao12)}
+              </span>
+            </p>
+          </div>
         </div>
       </section>
 
       <div
-        className={`absolute bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] left-[max(1.25rem,env(safe-area-inset-left))] z-10 flex flex-col items-start gap-2 md:right-5 md:bottom-5 md:left-auto md:items-end ${chrome}`}
+        className={`absolute bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] left-[max(1.25rem,env(safe-area-inset-left))] flex flex-col items-start gap-2 md:right-5 md:bottom-5 md:left-auto md:items-end ${
+          previewExpanded ? 'z-[46]' : 'z-10'
+        } ${chrome}`}
       >
         {preview && (
-          <div className="h-20 w-20 md:h-44 md:w-44">
-            <Suspense fallback={null}>
-              <ScramblePreview
-                event={preview.event}
-                moves={preview.moves}
-                stickering={preview.stickering}
+          <>
+            {previewExpanded ? (
+              <div
+                data-preview-overlay
+                className="fixed inset-0 z-[45] bg-bg/80"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={() => setPreviewExpanded(false)}
               />
-            </Suspense>
-          </div>
+            ) : null}
+            <div
+              data-scramble-preview
+              onPointerDown={
+                previewExpanded ? (event) => event.stopPropagation() : undefined
+              }
+              className={
+                previewExpanded
+                  ? 'fixed top-1/2 left-1/2 z-[46] size-[min(80vw,28rem)] -translate-x-1/2 -translate-y-1/2 touch-none cursor-grab active:cursor-grabbing'
+                  : 'relative h-20 w-20 max-md:rounded-2xl max-md:border max-md:border-text/15 md:h-44 md:w-44 md:cursor-grab md:active:cursor-grabbing'
+              }
+            >
+              <Suspense fallback={null}>
+                <ScramblePreview
+                  event={preview.event}
+                  moves={preview.moves}
+                  stickering={preview.stickering}
+                />
+              </Suspense>
+              {previewExpanded ? (
+                <button
+                  type="button"
+                  aria-label="close scramble preview"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setPreviewExpanded(false)
+                  }}
+                  className="absolute -top-12 right-0 z-10 flex size-11 items-center justify-center text-text-dim outline-none transition-colors active:text-text [@media(hover:hover)]:hover:text-text"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-5">
+                    <path
+                      d="M6 6l12 12M18 6L6 18"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  tabIndex={hideChrome ? -1 : 0}
+                  aria-label="expand scramble preview"
+                  aria-expanded={false}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setPreviewExpanded(true)
+                  }}
+                  className="absolute inset-0 z-10 md:hidden"
+                />
+              )}
+            </div>
+          </>
         )}
         {inputMode !== 'gan' && (
           <button

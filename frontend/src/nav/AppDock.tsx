@@ -18,19 +18,19 @@ export default function AppDock({ hidden = false, leading }: AppDockProps) {
       data-app-dock
       aria-label="app"
       aria-hidden={hidden}
-      className={`fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 max-md:right-[max(0.75rem,env(safe-area-inset-right))] md:left-1/2 md:-translate-x-1/2 ${
+      className={`fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 max-md:right-[max(1rem,env(safe-area-inset-right))] max-md:left-[max(1rem,env(safe-area-inset-left))] md:left-1/2 md:-translate-x-1/2 ${
         hidden
           ? 'pointer-events-none opacity-0 transition-opacity duration-500 ease-out'
           : 'opacity-100 transition-opacity duration-500 ease-out'
       }`}
     >
-      <div className="flex items-end gap-2">
-        {leading ? <div className="md:hidden">{leading}</div> : null}
-        <ul className="glass-dock flex origin-bottom-right items-center gap-1 rounded-2xl px-2 py-1 transition-transform duration-200 ease-out motion-reduce:transition-none md:origin-bottom [@media(hover:hover)]:hover:scale-110">
+      <div className="flex items-end gap-2 max-md:items-stretch">
+        {leading ? <div className="flex flex-1 md:hidden">{leading}</div> : null}
+        <ul className="glass-dock flex origin-bottom-right items-center gap-1 rounded-2xl px-2 py-1 transition-transform duration-200 ease-out motion-reduce:transition-none md:origin-bottom max-md:flex-1 max-md:justify-around max-md:border-text/20 [@media(hover:hover)]:hover:scale-110">
           {ITEMS.map((item) => {
             const Icon = item.icon
             return (
-              <li key={item.to}>
+              <li key={item.to} className="max-md:flex max-md:flex-1 max-md:justify-center">
                 <NavLink
                   to={item.to}
                   end={item.end}

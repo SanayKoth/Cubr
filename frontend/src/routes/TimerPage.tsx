@@ -24,6 +24,7 @@ import SolveList from '../solves/SolveList'
 import { formatSolveTime } from '../solves/format'
 import { averageOfN, bestSingle } from '../stats/engine'
 import { formatStat } from '../stats/format'
+import SessionGraph from '../stats/SessionGraph'
 import StatsBlock from '../stats/StatsBlock'
 import ManualReadout from '../timer/ManualReadout'
 import GanReadout from '../timer/GanReadout'
@@ -81,7 +82,7 @@ function isLivePhase(phase: TimerPhase): boolean {
 }
 
 export default function TimerPage() {
-  const [inspectionEnabled, setInspectionEnabled] = useState(readInspectionEnabled)
+  const [inspectionEnabled, setInspectionEnabledState] = useState(readInspectionEnabled)
   const [hideTimeDuringSolve, setHideTimeDuringSolveState] = useState(
     readHideTimeDuringSolve,
   )
@@ -92,6 +93,7 @@ export default function TimerPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [previewExpanded, setPreviewExpanded] = useState(false)
+  const [statsOpen, setStatsOpen] = useState(false)
   const copyTimerRef = useRef<number>(0)
   const lastScrambleTapRef = useRef(0)
   const solveScrollRef = useRef<HTMLDivElement>(null)
@@ -270,6 +272,8 @@ export default function TimerPage() {
       if (event.target.closest('[data-session-affordance]')) return
       if (event.target.closest('[data-times-affordance]')) return
       if (event.target.closest('[data-cancel-inspection]')) return
+      if (event.target.closest('[data-stats-panel]')) return
+      if (event.target.closest('[data-stats-toggle]')) return
       if (event.target.closest('[data-solve-card]')) return
       if (event.target.closest('[data-solve-card-overlay]')) {
         setDetailId(null)
@@ -311,11 +315,17 @@ export default function TimerPage() {
       (inspectionEnabled &&
         inputMode === 'keyboard' &&
         (phase === 'holding' || phase === 'ready'))
-    if (hidden) setPreviewExpanded(false)
+    if (hidden) {
+      setPreviewExpanded(false)
+      setStatsOpen(false)
+    }
   }, [ganInspecting, ganRunning, inputMode, inspectionEnabled, phase])
 
   useEffect(() => {
-    if (settingsOpen) setPreviewExpanded(false)
+    if (settingsOpen) {
+      setPreviewExpanded(false)
+      setStatsOpen(false)
+    }
   }, [settingsOpen])
 
   useEffect(() => {
@@ -330,15 +340,16 @@ export default function TimerPage() {
   }, [previewExpanded])
 
   useEffect(() => {
-    if (!previewExpanded) return
+    if (!previewExpanded && !statsOpen) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       event.preventDefault()
-      setPreviewExpanded(false)
+      if (previewExpanded) setPreviewExpanded(false)
+      else setStatsOpen(false)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [previewExpanded])
+  }, [previewExpanded, statsOpen])
 
   const pagerEnabled =
     !settingsOpen &&
@@ -364,12 +375,11 @@ export default function TimerPage() {
     onSwipeLeft: goToAlgs,
   })
 
-  const toggleInspection = () => {
-    const next = !inspectionEnabled
-    writeInspectionEnabled(next)
-    setInspectionEnabled(next)
+  const setInspectionEnabled = (enabled: boolean) => {
+    writeInspectionEnabled(enabled)
+    setInspectionEnabledState(enabled)
     if (
-      !next &&
+      !enabled &&
       (phase === 'inspecting' || phase === 'holding' || phase === 'ready')
     ) {
       cancelAndDismiss()
@@ -390,6 +400,8 @@ export default function TimerPage() {
     disconnectGan,
     hideTimeDuringSolve,
     setHideTimeDuringSolve,
+    inspectionEnabled,
+    setInspectionEnabled,
   }
   const [heldPreview, setHeldPreview] = useState<{
     event: string
@@ -566,7 +578,7 @@ export default function TimerPage() {
         data-times-sheet
         className={`${
           sheetOpen
-            ? 'fixed z-30 flex min-h-0 flex-col touch-auto max-md:inset-x-[max(1rem,env(safe-area-inset-left))] max-md:right-[max(1rem,env(safe-area-inset-right))] max-md:bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] max-md:max-h-[min(62vh,calc(100dvh-8.5rem))] max-md:overflow-hidden max-md:rounded-3xl max-md:px-4 max-md:pt-3 max-md:pb-3 max-md:glass-dock max-md:border-text/20'
+            ? 'fixed z-30 flex min-h-0 flex-col touch-auto max-md:inset-x-[max(1rem,env(safe-area-inset-left))] max-md:right-[max(1rem,env(safe-area-inset-right))] max-md:bottom-[max(5.25rem,calc(env(safe-area-inset-bottom)+4.25rem))] max-md:h-[min(62vh,calc(100dvh-8.5rem))] max-md:overflow-hidden max-md:rounded-3xl max-md:px-4 max-md:pt-3 max-md:pb-3 max-md:glass-dock max-md:border-text/20'
             : 'hidden'
         } md:absolute md:inset-auto md:top-28 md:bottom-60 md:left-6 md:z-20 md:flex md:max-h-none md:w-56 md:flex-col md:overflow-visible md:rounded-none md:border-0 md:bg-transparent md:p-0 md:touch-auto ${chrome}`}
       >
@@ -588,31 +600,36 @@ export default function TimerPage() {
             }}
           />
         )}
-        <div className="mt-3 flex min-h-0 flex-1 flex-col max-md:border-t max-md:border-text/8 md:border-t md:border-border pt-3">
-          <div
-            ref={solveScrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain max-md:max-h-[min(36vh,18rem)]"
-          >
-            {active && (
-              <SolveList
-                solves={active.solves}
-                selectedId={selectedId}
-                personalBestMs={pbMs}
-                onSelect={(id) => {
-                  setSelectedId((current) => (current === id ? null : id))
-                  setDetailId(null)
-                }}
-                onDetails={setDetailId}
-                onSetPenalty={setPenalty}
-                onDelete={(id) => {
-                  deleteSolve(id)
-                  setSelectedId(null)
-                  setDetailId((current) => (current === id ? null : current))
-                }}
-              />
-            )}
+        <div className="mt-3 flex min-h-0 flex-1 flex-col max-md:grid max-md:grid-cols-2 max-md:border-t max-md:border-text/8 md:border-t md:border-border pt-3">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col max-md:pr-3">
+            <div
+              ref={solveScrollRef}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            >
+              {active && (
+                <SolveList
+                  solves={active.solves}
+                  selectedId={selectedId}
+                  personalBestMs={pbMs}
+                  onSelect={(id) => {
+                    setSelectedId((current) => (current === id ? null : id))
+                    setDetailId(null)
+                  }}
+                  onDetails={setDetailId}
+                  onSetPenalty={setPenalty}
+                  onDelete={(id) => {
+                    deleteSolve(id)
+                    setSelectedId(null)
+                    setDetailId((current) => (current === id ? null : current))
+                  }}
+                />
+              )}
+            </div>
+            {active && <StatsBlock solves={active.solves} />}
           </div>
-          {active && <StatsBlock solves={active.solves} />}
+          <div className="hidden min-h-0 min-w-0 max-md:flex max-md:h-full max-md:flex-col max-md:border-l max-md:border-text/15 max-md:pl-3">
+            <SessionGraph solves={active?.solves ?? []} />
+          </div>
         </div>
       </div>
 
@@ -774,7 +791,7 @@ export default function TimerPage() {
             {previewExpanded ? (
               <div
                 data-preview-overlay
-                className="fixed inset-0 z-[45] bg-bg/80"
+                className="fixed inset-0 z-[45] bg-bg/25 backdrop-blur-sm"
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={() => setPreviewExpanded(false)}
               />
@@ -786,7 +803,7 @@ export default function TimerPage() {
               }
               className={
                 previewExpanded
-                  ? 'fixed top-1/2 left-1/2 z-[46] size-[min(80vw,28rem)] -translate-x-1/2 -translate-y-1/2 touch-none cursor-grab active:cursor-grabbing'
+                  ? 'glass-dock fixed top-1/2 left-1/2 z-[46] size-[min(84vw,28rem)] -translate-x-1/2 -translate-y-1/2 rounded-3xl p-5 touch-none cursor-grab active:cursor-grabbing'
                   : 'relative h-20 w-20 max-md:rounded-2xl max-md:border max-md:border-text/15 md:h-44 md:w-44 md:cursor-grab md:active:cursor-grabbing'
               }
             >
@@ -797,27 +814,7 @@ export default function TimerPage() {
                   stickering={preview.stickering}
                 />
               </Suspense>
-              {previewExpanded ? (
-                <button
-                  type="button"
-                  aria-label="close scramble preview"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    setPreviewExpanded(false)
-                  }}
-                  className="absolute -top-12 right-0 z-10 flex size-11 items-center justify-center text-text-dim outline-none transition-colors active:text-text [@media(hover:hover)]:hover:text-text"
-                >
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="size-5">
-                    <path
-                      d="M6 6l12 12M18 6L6 18"
-                      stroke="currentColor"
-                      strokeWidth="1.75"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              ) : (
+              {previewExpanded ? null : (
                 <button
                   type="button"
                   tabIndex={hideChrome ? -1 : 0}
@@ -834,31 +831,34 @@ export default function TimerPage() {
             </div>
           </>
         )}
-        {inputMode !== 'gan' && (
-          <button
-            type="button"
-            tabIndex={-1}
-            role="switch"
-            aria-checked={inspectionEnabled}
-            data-inspection
-            onClick={toggleInspection}
-            className="flex items-center gap-2.5 text-sm text-text-muted"
+      </div>
+
+      <div
+        className={`absolute top-6 right-5 z-30 hidden md:block ${chrome}`}
+      >
+        <button
+          type="button"
+          tabIndex={hideChrome ? -1 : 0}
+          role="switch"
+          aria-checked={statsOpen}
+          aria-expanded={statsOpen}
+          data-stats-toggle
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={() => setStatsOpen((open) => !open)}
+          className={`text-sm transition-colors [@media(hover:hover)]:hover:text-text ${
+            statsOpen ? 'text-text' : 'text-text-muted'
+          }`}
+        >
+          stats
+        </button>
+        {statsOpen ? (
+          <div
+            data-stats-panel
+            className="absolute right-0 top-[calc(100%+0.75rem)] z-30 w-72 rounded-3xl p-4 glass-dock"
           >
-            inspection
-            <span
-              aria-hidden="true"
-              className={`relative h-5 w-9 rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none ${
-                inspectionEnabled ? 'bg-accent' : 'bg-text/15'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 size-4 rounded-full bg-text shadow-sm transition-transform duration-200 ease-[cubic-bezier(0.22,1.4,0.36,1)] motion-reduce:transition-none ${
-                  inspectionEnabled ? 'translate-x-4' : 'translate-x-0'
-                }`}
-              />
-            </span>
-          </button>
-        )}
+            <SessionGraph solves={active?.solves ?? []} />
+          </div>
+        ) : null}
       </div>
 
       {active && detailId ? (

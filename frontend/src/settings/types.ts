@@ -10,4 +10,6 @@ export type SettingsOutletContext = {
   disconnectGan: () => void
   hideTimeDuringSolve: boolean
   setHideTimeDuringSolve: (enabled: boolean) => void
+  inspectionEnabled: boolean
+  setInspectionEnabled: (enabled: boolean) => void
 }

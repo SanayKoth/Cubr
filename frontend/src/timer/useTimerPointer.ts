@@ -23,6 +23,8 @@ const CONTROL_SELECTOR = [
   '[data-times-affordance]',
   '[data-solve-card]',
   '[data-solve-card-overlay]',
+  '[data-stats-panel]',
+  '[data-stats-toggle]',
 ].join(',')
 
 type TimerPointerTarget = {

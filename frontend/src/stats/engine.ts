@@ -43,6 +43,39 @@ export function bestSingle(solves: readonly TimedSolve[]): StatValue {
   return bestMs === null ? { kind: 'blank' } : { kind: 'numeric', ms: bestMs }
 }
 
+function numericTimes(solves: readonly TimedSolve[]): number[] {
+  const values: number[] = []
+  for (const solve of solves) {
+    const next = effectiveTime(solve)
+    if (next.kind === 'numeric') values.push(next.ms)
+  }
+  return values
+}
+
+export function worstSingle(solves: readonly TimedSolve[]): StatValue {
+  const values = numericTimes(solves)
+  if (values.length === 0) return { kind: 'blank' }
+  return { kind: 'numeric', ms: Math.max(...values) }
+}
+
+export function timeRange(solves: readonly TimedSolve[]): StatValue {
+  const values = numericTimes(solves)
+  if (values.length < 2) return { kind: 'blank' }
+  return { kind: 'numeric', ms: Math.max(...values) - Math.min(...values) }
+}
+
+export function sampleSigma(solves: readonly TimedSolve[]): StatValue {
+  const values = numericTimes(solves)
+  if (values.length < 2) return { kind: 'blank' }
+  const mean = values.reduce((sum, ms) => sum + ms, 0) / values.length
+  let sumSq = 0
+  for (const ms of values) {
+    const delta = ms - mean
+    sumSq += delta * delta
+  }
+  return { kind: 'numeric', ms: Math.sqrt(sumSq / (values.length - 1)) }
+}
+
 export function sessionMean(solves: readonly TimedSolve[]): StatValue {
   let sum = 0
   let count = 0

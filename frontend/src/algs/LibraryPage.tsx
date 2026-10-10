@@ -9,8 +9,6 @@ import { rememberAlgsPath, useEdgeSwipe } from '../nav/useEdgeSwipe'
 import { useTrackpadSwipe } from '../nav/useTrackpadSwipe'
 import { slideNavigate, TIMER_PAGE } from '../nav/slideNavigate'
 
-const OLL_PAGES: readonly (string | null)[] = [null, ...OLL_GROUPS]
-
 export default function LibraryPage() {
   const { set: setParam } = useParams()
   const navigate = useNavigate()
@@ -33,9 +31,18 @@ export default function LibraryPage() {
     slideNavigate(() => navigate('/'), 'right', TIMER_PAGE)
   }, [navigate])
 
+  const goToOll = useCallback(() => {
+    navigate('/algs/oll', { replace: true })
+  }, [navigate])
+
+  const goToPll = useCallback(() => {
+    navigate('/algs/pll', { replace: true })
+  }, [navigate])
+
   useEdgeSwipe({
     enabled: !invalidSet,
-    onSwipeRight: goToTimer,
+    onSwipeLeft: set === 'oll' ? goToPll : undefined,
+    onSwipeRight: set === 'pll' ? goToOll : goToTimer,
   })
 
   useTrackpadSwipe(pageRef, {
@@ -43,19 +50,14 @@ export default function LibraryPage() {
     onSwipeRight: goToTimer,
   })
 
-  const stepOllGroup = useCallback((delta: number) => {
-    setOllGroup((current) => {
-      const index = OLL_PAGES.indexOf(current)
-      const next = index + delta
-      if (next < 0 || next >= OLL_PAGES.length) return current
-      return OLL_PAGES[next] ?? null
-    })
-  }, [])
-
   useHorizontalPageSwipe(listRef, {
-    enabled: !invalidSet && set === 'oll',
-    onPrev: () => stepOllGroup(-1),
-    onNext: () => stepOllGroup(1),
+    enabled: !invalidSet,
+    onPrev: () => {
+      if (set === 'pll') goToOll()
+    },
+    onNext: () => {
+      if (set === 'oll') goToPll()
+    },
   })
 
   if (invalidSet) {
